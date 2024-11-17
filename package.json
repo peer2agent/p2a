@@ -1,0 +1,22 @@
+{
+    "name": "wallet-tracker-sol",
+    "version": "1.0.0",
+    "main": "index.js",
+    "scripts": {
+        "start": "ts-node index.ts"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "description": "",
+    "dependencies": {
+        "axios": "^1.7.7",
+        "dotenv": "^16.4.5",
+        "helius-sdk": "^1.4.0"
+    },
+    "devDependencies": {
+        "@types/node": "^22.9.0",
+        "ts-node": "^10.9.2",
+        "typescript": "^5.6.3"
+    }
+}
