@@ -3,7 +3,8 @@
     "version": "1.0.0",
     "main": "index.js",
     "scripts": {
-        "start": "ts-node index.ts"
+        "start": "ts-node index.ts",
+        "test-webhook": "ts-node extract_webhook_data.ts"
     },
     "keywords": [],
     "author": "",

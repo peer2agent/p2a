@@ -1,4 +1,4 @@
-import { Helius } from "helius-sdk";
+import { Helius, TransactionType, WebhookType } from "helius-sdk";
 import * as path from "path";
 import * as fs from "fs";
 import dotenv from "dotenv";
@@ -13,9 +13,10 @@ class WalletTracker {
 
     constructor(apiKey: string, trackedWallet: string) {
         this.helius = new Helius(apiKey);
+
+        this.trackedWallet = trackedWallet;
         this.apiKey = apiKey;
         this.assets = {};
-        this.trackedWallet = trackedWallet;
     }
 
     async getAssetsByOwner(wallet: string): Promise<void> {
@@ -45,6 +46,15 @@ class WalletTracker {
         this.storeOutputInJsonFile(outputData);
     }
 
+    createWebhook(webhookUrl: string): void {
+        this.helius.createWebhook({
+            webhookURL: webhookUrl,
+            transactionTypes: [TransactionType.SWAP],
+            accountAddresses: [this.trackedWallet],
+            webhookType: WebhookType.RAW,
+        });
+    }
+
     storeOutputInJsonFile(outputData: any): void {
         const outputDir = path.join(__dirname, "output");
         const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
@@ -61,7 +71,7 @@ class WalletTracker {
     }
 }
 
-function main(apiKey: string, wallet: string): void {
+function main(apiKey: string, wallet: string, webhookURL: string): void {
     const tracker = new WalletTracker(apiKey, wallet);
     tracker
         .getAssetsByOwner(wallet)
@@ -71,12 +81,15 @@ function main(apiKey: string, wallet: string): void {
         .catch((error) => {
             console.error("Error fetching assets", error);
         });
+
+    tracker.createWebhook(webhookURL);
 }
 
 const apiKey = process.env.HELIUS_API_KEY!;
 const wallet = process.env.WALLET_ADDRESS!;
+const webhookURL = process.env.WEBHOOK_URL!;
 
 console.log("API Key: ", apiKey);
 console.log("Wallet Address: ", wallet);
 
-main(apiKey, wallet);
+main(apiKey, wallet, webhookURL);
