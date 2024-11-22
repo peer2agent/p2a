@@ -1,4 +1,4 @@
-import { Helius } from "helius-sdk";
+import { Helius, TransactionType } from "helius-sdk";
 import * as path from "path";
 import * as fs from "fs";
 import dotenv from "dotenv";
@@ -9,14 +9,18 @@ class WalletTracker {
     private readonly helius: Helius;
     private readonly apiKey: string;
     private readonly trackedWallet: string;
+    private readonly webhookURL: string;
+    private initialAssetDistribution: any;
+    private assetsByOwnerOutput: any;
 
-    constructor(apiKey: string, trackedWallet: string) {
+    constructor(apiKey: string, trackedWallet: string, webhookURL: string) {
         this.helius = new Helius(apiKey);
         this.apiKey = apiKey;
         this.trackedWallet = trackedWallet;
+        this.webhookURL = webhookURL;
     }
 
-    async getAssetsByOwner(wallet: string): Promise<void> {
+    async getAssetsByOwner(wallet: string): Promise<any> {
         console.log(
             `\n[${this.formatTimestamp()}] Starting fetch for wallet: ${wallet}`
         );
@@ -48,14 +52,11 @@ class WalletTracker {
             };
 
             console.log(
-                `[${this.formatTimestamp()}] Processing asset distribution...`
-            );
-            this.calculateAssetDistribution(outputData);
-
-            console.log(
                 `[${this.formatTimestamp()}] Saving output data to JSON...`
             );
             this.storeOutputInJsonFile(outputData);
+
+            this.assetsByOwnerOutput = outputData;
         } catch (error) {
             console.error(
                 `[${this.formatTimestamp()}] Error fetching assets for wallet: ${wallet}`,
@@ -64,7 +65,49 @@ class WalletTracker {
         }
     }
 
-    calculateAssetDistribution(outputData: any): void {
+    async createWebhookIfNotExists() {
+        const apiKey = process.env.HELIUS_API_KEY!;
+        const helius = new Helius(apiKey);
+
+        // Desired webhook URL and other details
+        const desiredWebhookURL = this.webhookURL;
+        const webhookTypes: TransactionType[] = [TransactionType.SWAP];
+        const webhookAccountAddresses = [this.trackedWallet];
+
+        try {
+            console.log("Fetching existing webhooks...");
+
+            // Fetch all webhooks associated with the account
+            const existingWebhooks = await helius.getAllWebhooks();
+
+            console.log("Checking if the desired webhook already exists...");
+            const webhookAlreadyExists = existingWebhooks.some(
+                (webhook: any) => webhook.webhookURL === desiredWebhookURL
+            );
+
+            if (webhookAlreadyExists) {
+                console.log("Webhook already exists. Skipping creation.");
+                return;
+            }
+
+            console.log("Webhook does not exist. Creating new webhook...");
+
+            // Create a new webhook
+            const newWebhook = await helius.createWebhook({
+                webhookURL: desiredWebhookURL,
+                transactionTypes: webhookTypes,
+                accountAddresses: webhookAccountAddresses,
+            });
+
+            console.log("Webhook created successfully:", newWebhook);
+        } catch (error) {
+            console.error("Error while creating or checking webhook:", error);
+        }
+    }
+
+    calculateAssetDistribution(): void {
+        const outputData = this.assetsByOwnerOutput;
+
         console.log(
             `\n[${this.formatTimestamp()}] Calculating asset distribution for wallet: ${
                 outputData.wallet
@@ -108,23 +151,33 @@ class WalletTracker {
             const decimals = asset.token_info?.decimals || 0;
             const quantity = balance / Math.pow(10, decimals);
 
+            const percentage = (totalPrice / totalValue) * 100;
+
             return {
                 id: asset.id,
                 symbol: symbol,
                 totalPrice: totalPrice,
                 quantity: quantity,
-                percentage: ((totalPrice / totalValue) * 100).toFixed(2),
+                percentage:
+                    percentage < 1
+                        ? percentage.toPrecision(3)
+                        : percentage.toFixed(2),
             };
         });
 
         // Add native token to the distribution
         const solQuantity = nativeBalanceAmount / 1e9;
+        const nativePercentage = (nativeBalancePrice / totalValue) * 100;
+
         distribution.push({
             id: "SOL",
             symbol: "SOL",
             totalPrice: nativeBalancePrice,
             quantity: solQuantity,
-            percentage: ((nativeBalancePrice / totalValue) * 100).toFixed(2),
+            percentage:
+                nativePercentage < 1
+                    ? nativePercentage.toPrecision(3)
+                    : nativePercentage.toFixed(2),
         });
 
         console.log(`\n[${this.formatTimestamp()}] Asset Distribution:`);
@@ -138,6 +191,8 @@ class WalletTracker {
                     `  - Distribution: ${d.percentage}%\n`
             );
         });
+
+        this.initialAssetDistribution = distribution;
     }
 
     storeOutputInJsonFile(outputData: any): void {
@@ -183,7 +238,11 @@ class WalletTracker {
     }
 }
 
-function main(apiKey: string, wallet: string, webhookURL: string): void {
+async function main(
+    apiKey: string,
+    wallet: string,
+    webhookURL: string
+): Promise<void> {
     const obfuscatedApiKey = `${apiKey.slice(0, 3)}***${apiKey.slice(-3)}`;
     console.log(
         `\n[${new Date().toISOString()}] Initializing WalletTracker...`
@@ -191,21 +250,29 @@ function main(apiKey: string, wallet: string, webhookURL: string): void {
     console.log(`[${new Date().toISOString()}] API Key: ${obfuscatedApiKey}`);
     console.log(`[${new Date().toISOString()}] Wallet Address: ${wallet}\n`);
 
-    const tracker = new WalletTracker(apiKey, wallet);
+    const tracker = new WalletTracker(apiKey, wallet, webhookURL);
 
-    tracker
-        .getAssetsByOwner(wallet)
-        .then(() => {
-            console.log(
-                `\n[${new Date().toISOString()}] Process completed successfully.\n`
-            );
-        })
-        .catch((error) => {
-            console.error(
-                `\n[${new Date().toISOString()}] Error during WalletTracker execution.\n`,
-                error
-            );
-        });
+    try {
+        console.log(
+            `[${new Date().toISOString()}] Checking and creating webhook if needed...`
+        );
+        await tracker.createWebhookIfNotExists();
+
+        console.log(
+            `[${new Date().toISOString()}] Fetching assets for wallet...`
+        );
+        await tracker.getAssetsByOwner(wallet);
+        tracker.calculateAssetDistribution();
+
+        console.log(
+            `[${new Date().toISOString()}] Process completed successfully.\n`
+        );
+    } catch (error) {
+        console.error(
+            `[${new Date().toISOString()}] Error during WalletTracker execution.`,
+            error
+        );
+    }
 }
 
 const apiKey = process.env.HELIUS_API_KEY!;
