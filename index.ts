@@ -71,7 +71,7 @@ class WalletTracker {
 
         // Desired webhook URL and other details
         const desiredWebhookURL = this.webhookURL;
-        const webhookTypes: TransactionType[] = [TransactionType.SWAP];
+        const webhookTypes: TransactionType[] = [TransactionType.ANY];
         const webhookAccountAddresses = [this.trackedWallet];
 
         try {
@@ -238,12 +238,44 @@ class WalletTracker {
     }
 }
 
+function parseJsonAndExtractTokenTransfers(filePath: string) {
+  try {
+    const jsonData = JSON.parse(fs.readFileSync(filePath, "utf8"));
+
+    const parsedData = jsonData
+      .map((transaction: any) => {
+        if (
+          transaction.tokenTransfers &&
+          transaction.tokenTransfers.length > 0
+        ) {
+          const firstTransfer = transaction.tokenTransfers[0];
+          return {
+            fromTokenAccount: firstTransfer.fromTokenAccount,
+            fromUserAccount: firstTransfer.fromUserAccount,
+            mint: firstTransfer.mint,
+            toTokenAccount: firstTransfer.toTokenAccount,
+            toUserAccount: firstTransfer.toUserAccount,
+          };
+        } else {
+          return null; 
+        }
+      })
+      .filter((item: any) => item !== null); 
+
+    return parsedData;
+  } catch (error) {
+    console.error("Erro ao processar o arquivo JSON:", error);
+    return null;
+  }
+}
+
+
+
 async function main(
     apiKey: string,
     wallet: string,
     webhookURL: string
-): Promise<void> {
-    const obfuscatedApiKey = `${apiKey.slice(0, 3)}***${apiKey.slice(-3)}`;
+): Promise<void> {    const obfuscatedApiKey = `${apiKey.slice(0, 3)}***${apiKey.slice(-3)}`;
     console.log(
         `\n[${new Date().toISOString()}] Initializing WalletTracker...`
     );
@@ -264,6 +296,18 @@ async function main(
         await tracker.getAssetsByOwner(wallet);
         tracker.calculateAssetDistribution();
 
+        const filePath = "./webhook.json"; 
+        const tokenTransferData = parseJsonAndExtractTokenTransfers(
+          filePath
+        );
+
+        if (tokenTransferData) {
+            console.log(
+                `[${new Date().toISOString()}] Token Transfer Data:`,
+                JSON.stringify(tokenTransferData, null, 2)
+            );
+        }
+
         console.log(
             `[${new Date().toISOString()}] Process completed successfully.\n`
         );
@@ -274,6 +318,7 @@ async function main(
         );
     }
 }
+
 
 const apiKey = process.env.HELIUS_API_KEY!;
 const wallet = process.env.WALLET_ADDRESS!;
