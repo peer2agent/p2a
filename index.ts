@@ -2,6 +2,7 @@ import { Helius, TransactionType } from "helius-sdk";
 import * as path from "path";
 import * as fs from "fs";
 import dotenv from "dotenv";
+import { startServer } from "./server";
 
 dotenv.config();
 
@@ -275,7 +276,11 @@ async function main(
     apiKey: string,
     wallet: string,
     webhookURL: string
-): Promise<void> {    const obfuscatedApiKey = `${apiKey.slice(0, 3)}***${apiKey.slice(-3)}`;
+): Promise<void> {    
+
+  startServer();
+
+  const obfuscatedApiKey = `${apiKey.slice(0, 3)}***${apiKey.slice(-3)}`;
     console.log(
         `\n[${new Date().toISOString()}] Initializing WalletTracker...`
     );
