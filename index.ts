@@ -2,7 +2,7 @@ import { Helius, TransactionType } from "helius-sdk";
 import * as path from "path";
 import * as fs from "fs";
 import dotenv from "dotenv";
-import { startServer } from "./server";
+import startServer from "./server";
 
 dotenv.config();
 
