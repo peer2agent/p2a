@@ -1,0 +1,14 @@
+{
+  "type": "swap",
+  "signature": "VXkywRd7vHmyJXAgta8pRxaa4BSthfxH4qu87i2NiuBzoawS1mHrbauV3BYkkXLxE2dBwGEzs23jL5JSSGJP7CQ",
+  "tokenTransfers": {
+    "tokenComprado": {
+      "mint": "HFThPp9LULZBFaEHkyT4km8ymp1EVWSF5R5Pc7vbpump",
+      "amount": 27557092.427214
+    },
+    "tokenVendido": {
+      "mint": "So11111111111111111111111111111111111111112",
+      "amount": 1.9790793
+    }
+  }
+}
