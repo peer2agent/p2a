@@ -52,10 +52,10 @@ class WalletTracker {
                 nativeBalance: assets.nativeBalance,
             };
 
-            console.log(
-                `[${this.formatTimestamp()}] Saving output data to JSON...`
-            );
-            this.storeOutputInJsonFile(outputData);
+            // console.log(
+            //     `[${this.formatTimestamp()}] Saving output data to JSON...`
+            // );
+            // this.storeOutputInJsonFile(outputData);
 
             this.assetsByOwnerOutput = outputData;
         } catch (error) {
@@ -72,7 +72,7 @@ class WalletTracker {
 
         // Desired webhook URL and other details
         const desiredWebhookURL = this.webhookURL;
-        const webhookTypes: TransactionType[] = [TransactionType.ANY];
+        const webhookTypes: TransactionType[] = [TransactionType. ANY];
         const webhookAccountAddresses = [this.trackedWallet];
 
         try {
@@ -239,38 +239,36 @@ class WalletTracker {
     }
 }
 
-function parseJsonAndExtractTokenTransfers(filePath: string) {
-  try {
-    const jsonData = JSON.parse(fs.readFileSync(filePath, "utf8"));
+// function parseJsonAndExtractTokenTransfers(filePath: string) {
+//   try {
+//     const jsonData = JSON.parse(fs.readFileSync(filePath, "utf8"));
 
-    const parsedData = jsonData
-      .map((transaction: any) => {
-        if (
-          transaction.tokenTransfers &&
-          transaction.tokenTransfers.length > 0
-        ) {
-          const firstTransfer = transaction.tokenTransfers[0];
-          return {
-            fromTokenAccount: firstTransfer.fromTokenAccount,
-            fromUserAccount: firstTransfer.fromUserAccount,
-            mint: firstTransfer.mint,
-            toTokenAccount: firstTransfer.toTokenAccount,
-            toUserAccount: firstTransfer.toUserAccount,
-          };
-        } else {
-          return null; 
-        }
-      })
-      .filter((item: any) => item !== null); 
+//     const parsedData = jsonData
+//       .map((transaction: any) => {
+//         if (
+//           transaction.tokenTransfers &&
+//           transaction.tokenTransfers.length > 0
+//         ) {
+//           const firstTransfer = transaction.tokenTransfers[0];
+//           return {
+//             fromTokenAccount: firstTransfer.fromTokenAccount,
+//             fromUserAccount: firstTransfer.fromUserAccount,
+//             mint: firstTransfer.mint,
+//             toTokenAccount: firstTransfer.toTokenAccount,
+//             toUserAccount: firstTransfer.toUserAccount,
+//           };
+//         } else {
+//           return null; 
+//         }
+//       })
+//       .filter((item: any) => item !== null); 
 
-    return parsedData;
-  } catch (error) {
-    console.error("Erro ao processar o arquivo JSON:", error);
-    return null;
-  }
-}
-
-
+//     return parsedData;
+//   } catch (error) {
+//     console.error("Erro ao processar o arquivo JSON:", error);
+//     return null;
+//   }
+// }
 
 async function main(
     apiKey: string,
@@ -301,17 +299,17 @@ async function main(
         await tracker.getAssetsByOwner(wallet);
         tracker.calculateAssetDistribution();
 
-        const filePath = "./webhook.json"; 
-        const tokenTransferData = parseJsonAndExtractTokenTransfers(
-          filePath
-        );
+        // const filePath = "./webhook.json"; 
+        // const tokenTransferData = parseJsonAndExtractTokenTransfers(
+        //   filePath
+        // );
 
-        if (tokenTransferData) {
-            console.log(
-                `[${new Date().toISOString()}] Token Transfer Data:`,
-                JSON.stringify(tokenTransferData, null, 2)
-            );
-        }
+        // if (tokenTransferData) {
+        //     console.log(
+        //         `[${new Date().toISOString()}] Token Transfer Data:`,
+        //         JSON.stringify(tokenTransferData, null, 2)
+        //     );
+        // }
 
         console.log(
             `[${new Date().toISOString()}] Process completed successfully.\n`
