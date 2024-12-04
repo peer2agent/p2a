@@ -1,9 +1,5 @@
 {
   "type": "transfer",
-  "signature": "tbJke9QZcXFoQEXuAkbzsymR6oF4H7sKVtPYJPnALsa9kY2MUDRB2YCMeGdNmmijiTpL8iq5c4JndbxxsgiZQXN",
-  "transfer": {
-    "amount": 1231920,
-    "sender": "FgAhgj6RoVikRvPxaxTo42vLf4AmHDj2xWGEnfSZn6tY",
-    "receiver": "7BikaSR2ZM6Yprm2gSCTsUAs3cGiurgog8ZQ832dpi3o"
-  }
+  "signature": "48z7oSJgEDbxoZ7izYQCM3W3EaDMB7WtLUN5bFescefGfFB1aaadhu4NbPNdievcy9ZAqK5bqYitMzSPCf1P8Ai7",
+  "tokenTransfers": []
 }
