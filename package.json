@@ -11,8 +11,11 @@
     "license": "ISC",
     "description": "",
     "dependencies": {
+        "@types/express": "^5.0.0",
         "axios": "^1.7.7",
+        "body-parser": "^1.20.3",
         "dotenv": "^16.4.5",
+        "express": "^4.21.1",
         "helius-sdk": "^1.4.0"
     },
     "devDependencies": {
