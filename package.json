@@ -1,9 +1,9 @@
 {
     "name": "wallet-tracker-sol",
     "version": "1.0.0",
-    "main": "index.js",
+    "main": "src/web/tracking-wallet/tracking.ts",
     "scripts": {
-        "start": "ts-node index.ts",
+        "start": "ts-node src/web/tracking-wallet/tracking.ts",
         "test-webhook": "ts-node extract_webhook_data.ts"
     },
     "keywords": [],
@@ -16,7 +16,8 @@
         "body-parser": "^1.20.3",
         "dotenv": "^16.4.5",
         "express": "^4.21.1",
-        "helius-sdk": "^1.4.0"
+        "helius-sdk": "^1.4.0",
+        "wallet-tracker-sol": "file:"
     },
     "devDependencies": {
         "@types/node": "^22.9.0",
