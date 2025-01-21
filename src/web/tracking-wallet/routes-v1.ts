@@ -2,6 +2,9 @@ import express from "express";
 import { TrackingWalletUseCase } from "../../usecase/impl/TrackingWalletUseCase";
 import fs from "fs";
 import dotenv from "dotenv";
+import { BotTradeUseCase } from "../../usecase/impl/BotTradeUseCase";
+import { RealiseSwap } from "../../usecase/impl/RealiseSwapUseCase";
+import { TrackingInfoInputDTO } from "../../input/dto/TrackingInfoInputDTO";
 
 dotenv.config();
 
@@ -19,6 +22,28 @@ app.post("/tracking", async (req, res) => {
 
   res.send(distribution);
 });
+
+app.post("/start-bot", (req, res) => {
+
+  var bot = new BotTradeUseCase();
+
+  bot.usecase(req.body);
+
+  res.send("Bot is started");
+})
+
+
+
+app.post("/realise-trade", async (req, res) => {
+
+  var realiseSwap = new RealiseSwap();
+  var tracking: TrackingInfoInputDTO = req.body
+  
+  await realiseSwap.usecase(tracking);
+
+  res.send("ok");
+})
+
 
 app.post("/webhook", (req: any, res: any) => {
   try {
