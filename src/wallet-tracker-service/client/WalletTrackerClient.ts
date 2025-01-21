@@ -1,6 +1,7 @@
 import { Helius, TransactionType } from "helius-sdk";
 import * as path from "path";
 import * as fs from "fs";
+import { HistorySwapTokenDTO } from "../dto/HistorySwapTokenDTO";
 
 export class WalletTrackerClient {
   private readonly helius: Helius;
@@ -141,7 +142,7 @@ export class WalletTrackerClient {
       )} USDC`
     );
 
-    const distribution = assets.map((asset: any) => {
+    const distribution: HistorySwapTokenDTO[] = assets.map((asset: any) => {
       const totalPrice = asset.token_info?.price_info?.total_price || 0;
       const symbol = asset.token_info?.symbol || "Unknown";
       const balance = asset.token_info?.balance || 0;

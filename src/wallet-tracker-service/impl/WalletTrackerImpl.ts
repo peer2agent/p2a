@@ -1,10 +1,11 @@
 import { WalletTrackerClient } from "../client/WalletTrackerClient";
 import { TrackingInfoInputDTO } from "../../input/dto/TrackingInfoInputDTO";
+import { HistorySwapTokenDTO } from "../dto/HistorySwapTokenDTO";
 
 export class WalletTrackerImpl {
   async initiateServer(
     trackingInfoInputDTO: TrackingInfoInputDTO
-  ): Promise<void> {
+  ): Promise<HistorySwapTokenDTO[]> {
     const { apiKey, trackedWallet, webhookURL } = trackingInfoInputDTO;
     const obfuscatedApiKey = `${apiKey.slice(0, 3)}***${apiKey.slice(-3)}`;
     console.log(
