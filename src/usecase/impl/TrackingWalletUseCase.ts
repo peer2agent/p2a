@@ -1,5 +1,5 @@
 import { TrackingInfoInputDTO } from "../../input/dto/TrackingInfoInputDTO";
-import { TrackingService} from "../../output/service/TrackingService";
+import { TrackingService } from "../../output/service/TrackingService";
 import { WalletTrackerImpl } from "../../wallet-tracker-service/impl/WalletTrackerImpl";
 
 export class TrackingWalletUseCase implements TrackingService {
