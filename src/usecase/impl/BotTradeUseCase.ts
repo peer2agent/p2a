@@ -9,32 +9,50 @@ export class BotTradeUseCase {
   public async usecase(
     trackingInfoInputDTO: TrackingInfoInputDTO
   ): Promise<any> {
-    const wallet = Keypair.generate();
+    const walletOwner = Keypair.generate();
 
-    var trackingInfo = new WalletTrackerImpl();
+    var trackingInfo = new WalletTrackerImpl(trackingInfoInputDTO.apiKey, trackingInfoInputDTO.webhookURL);
 
-    var swapHistory = await trackingInfo.initiateServer(trackingInfoInputDTO);
+    var listOfSwap: TraderBotConfigDTO[] = [];
 
-    //TODO DEIXAR COMO ESCOLHER TOKEN ? ()
-    var first = swapHistory[0].id;
+    try{
+      await Promise.all(trackingInfoInputDTO.trackedWallet.map(async (wallet) => {
+        wallet.wallet
 
-    var traderBotConfig: TraderBotConfigDTO = {
-      solanaEndpoint: trackingInfoInputDTO.configTrade!!, // e.g., "https://ex-am-ple.solana-mainnet.quiknode.pro/123456/"
-      metisEndpoint: "https://public.jupiterapi.com", // e.g., "https://jupiter-swap-api.quiknode.pro/123456/"
-      secretKey: wallet.secretKey,
-      firstTradePrice: 1, // e.g. 94 USDC/SOL
-      targetGainPercentage: 1.5,
-      initialInputToken: SwapToken.SOL,
-      initialInputAmount: 1000, //TODO deixar dinamico
-      usdcMint: new PublicKey(first),
-      solMint: new PublicKey("So11111111111111111111111111111111111111112"),
-    };
+        var swapHistory = await trackingInfo.initiateServer(wallet.wallet);
+        
+        swapHistory.map((token)=>{
+          var traderBotConfig: TraderBotConfigDTO = {
+            solanaEndpoint: trackingInfoInputDTO.configTrade!!, // e.g., "https://ex-am-ple.solana-mainnet.quiknode.pro/123456/"
+            metisEndpoint: "https://public.jupiterapi.com", // e.g., "https://jupiter-swap-api.quiknode.pro/123456/"
+            secretKey: walletOwner.secretKey,
+            firstTradePrice: 1,
+            targetGainPercentage: 1.5,
+            initialInputToken: SwapToken.SOL,
+            initialInputAmount: wallet.value * token.percentage, //TODO deixar dinamico
+            usdcMint: new PublicKey(token.id),
+            solMint: new PublicKey("So11111111111111111111111111111111111111112"),
+          };
 
-    console.log("Public Key:", wallet.publicKey.toBase58());
-    console.log("Secret Key:", Array.from(wallet.secretKey));
+          listOfSwap.push(traderBotConfig)      
+        
+      });
+    
+    }))
+    
+    console.log("Public Key:", walletOwner.publicKey.toBase58());
+    console.log("Secret Key:", Array.from(walletOwner.secretKey));
 
-    const bot = new TradeBotImpl(traderBotConfig);
+    listOfSwap.map((swapConfig) => {
+      new TradeBotImpl(swapConfig).init();
+    })
 
-    return await bot.init();
+    
+    } catch(error){
+      console.error(`[${new Date().toISOString()}] Error during BotTrade execution.`, error);
+    
+    }finally {
+      return "initiated"
+    }
   }
 }

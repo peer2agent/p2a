@@ -43,7 +43,7 @@ export class JupiterClientSwap {
     }
 
     async fetchSwapInfo(amount :number) {
-        var url = `https://quote-api.jup.ag/v6/quote?inputMint=${this.inputMintTokenAddress}&outputMint=${this.outputMintTokenAddress}&amount=${amount}&swapMode=ExactOut&slippageBps=50`
+        var url = `https://quote-api.jup.ag/v6/quote?inputMint=${this.inputMintTokenAddress}&outputMint=${this.outputMintTokenAddress}&amount=${amount}&swapMode=ExactOut&slippageBps=1`
         console.log(url)
         const response = await fetch(url)
         const data = await response.json()
