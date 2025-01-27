@@ -1,4 +1,3 @@
-import dotenv from "dotenv";
 import { TraderBotConfigDTO } from "../dto/TraderBotConfigDTO";
 import {
   Keypair,
@@ -6,13 +5,15 @@ import {
   PublicKey,
   LAMPORTS_PER_SOL,
 } from "@solana/web3.js";
-import { QuoteResponse } from "@jup-ag/api";
+import { QuoteResponse, ResponseError } from "@jup-ag/api";
 import { getAssociatedTokenAddressSync } from "@solana/spl-token";
 import * as fs from "fs";
 import * as path from "path";
 import { NextTradeDTO } from "../dto/NextTradeDTO";
 import { LogSwapArgsDTO } from "../dto/LogSwapArgsDTO";
 import { SwapToken } from "../enum/SwapToken";
+import { JupiterClientSwap } from "../client/JupiterClientSwap";
+import { SwapInfoDTO } from "../dto/SwapInfoDTO";
 
 export class TradeBotImpl {
     private solanaConnection: Connection;
@@ -28,7 +29,9 @@ export class TradeBotImpl {
     private targetGainPercentage: number = 1;
     private nextTrade: NextTradeDTO;
     private waitingForConfirmation: boolean = false;
-    // private generateSwap: GenerateSwapSerum;
+    private jupyterClient: JupiterClientSwap;
+    private ownerMintTokenAccount: PublicKey |undefined;
+  jupiterApi: any;
 
     constructor(config: TraderBotConfigDTO) {
       const {
@@ -41,14 +44,14 @@ export class TradeBotImpl {
         firstTradePrice,
         usdcMint,
         solMint,
+      
       } = config;
 
       this.solanaConnection = new Connection(solanaEndpoint);
-      // this.generateSwap = new GenerateSwapSerum(config);
       this.wallet = Keypair.fromSecretKey(secretKey);
       this.usdcMint = usdcMint!!;
       this.solMint = solMint!!;
-
+      
       this.usdcTokenAccount = getAssociatedTokenAddressSync(this.usdcMint,this.wallet.publicKey);
       
       if (targetGainPercentage) {
@@ -59,6 +62,15 @@ export class TradeBotImpl {
         this.checkInterval = checkInterval;
       }
       
+      this.jupyterClient = new JupiterClientSwap({
+        outputMintTokenAddress: initialInputToken === SwapToken.SOL ? this.solMint : this.usdcMint,
+        inputMintTokenAddress: initialInputToken === SwapToken.SOL ? this.solMint : this.usdcMint,
+        ownerPublicKey: this.wallet.publicKey,
+        connection: this.solanaConnection,
+        feeAccount: this.wallet.publicKey,
+        trackingAccount : this.wallet.publicKey
+    })
+
       this.nextTrade = {
         inputMint:initialInputToken === SwapToken.SOL ? this.solMint.toBase58() : this.usdcMint.toBase58(),
         outputMint:initialInputToken === SwapToken.SOL ? this.usdcMint.toBase58() : this.solMint.toBase58(),
@@ -120,8 +132,12 @@ export class TradeBotImpl {
               console.log("Waiting for previous transaction to confirm...");
               return;
             }
-            // const quote = await this.generateSwap.getQuote(this.nextTrade);
-            // this.evaluateQuoteAndSwap(quote);
+            this.ownerMintTokenAccount = await this.jupyterClient.getOwnerMintTokenAccount()
+
+            const swapInfo = await this.jupyterClient.fetchSwapInfo(10)
+
+            //quote ->  quoteResponse.data
+            this.evaluateQuoteAndSwap(swapInfo);
           } catch (error) {
             console.error("Error getting quote:", error);
           }
@@ -129,29 +145,24 @@ export class TradeBotImpl {
       }, this.checkInterval);
     }
 
-    private async evaluateQuoteAndSwap(quote: QuoteResponse): Promise<void> {
-      let difference =
-        (parseInt(quote.outAmount) - this.nextTrade.nextTradeThreshold) /
-        this.nextTrade.nextTradeThreshold;
-      console.log(
-        `📈 Current price: ${quote.outAmount} is ${
-          difference > 0 ? "higher" : "lower"
-        } than the next trade threshold: ${
-          this.nextTrade.nextTradeThreshold
-        } by ${Math.abs(difference * 100).toFixed(2)}%.`
-      );
-      if (parseInt(quote.outAmount) > this.nextTrade.nextTradeThreshold) {
-        try {
-          this.waitingForConfirmation = true;
-          // var txid =  await this.generateSwap.executeSwap(quote);
-          // await this.postTransactionProcessing(quote, txid);
-        } catch (error) {
-          console.error("Error executing swap:", error);
-        } finally {
-          this.waitingForConfirmation = false;
-        }
+
+    private async evaluateQuoteAndSwap(swapInfo:SwapInfoDTO): Promise<void> {
+
+      swapInfo.otherAmountThreshold 
+
+      let difference = (parseInt(String(swapInfo.inAmount)) - this.nextTrade.nextTradeThreshold) / this.nextTrade.nextTradeThreshold;
+      console.log(`📈 Current price: ${swapInfo.inAmount} is ${difference > 0 ? 'higher' : 'lower'
+          } than the next trade threshold: ${this.nextTrade.nextTradeThreshold} by ${Math.abs(difference * 100).toFixed(2)}%.`);
+      
+          if (swapInfo.inAmount > this.nextTrade.nextTradeThreshold) {
+          try {
+              this.waitingForConfirmation = true;
+              await this.executeSwap(swapInfo,swapInfo.quoteResponse);
+          } catch (error) {
+              console.error('Error executing swap:', error);
+          }
       }
-    }
+  }
 
     private async updateNextTrade(lastTrade: QuoteResponse): Promise<void> {
       const priceChange = this.targetGainPercentage / 100;
@@ -231,4 +242,29 @@ export class TradeBotImpl {
         timestamp: new Date().toISOString(),
       });
     }
+
+
+  async executeSwap(swapInfo:SwapInfoDTO,route: QuoteResponse): Promise<void> {
+      try {
+        console.log("entrouuuuu swap")
+
+          const {swapTransaction, lastValidBlockHeight} = await this.jupyterClient.fetchSwapTransaction(this.wallet, this.ownerMintTokenAccount!!, swapInfo)
+          
+          var txid = await this.jupyterClient.sendTransaction(swapTransaction,this.wallet, lastValidBlockHeight)
+
+          await this.postTransactionProcessing(route, txid);
+
+      } catch (error) {
+          if (error instanceof ResponseError) {
+              console.log(await error.response.json());
+          }
+          else {
+              console.error(error);
+          }
+          throw new Error('Unable to execute swap');
+      } finally {
+          this.waitingForConfirmation = false;
+      }
+  }
+
 }

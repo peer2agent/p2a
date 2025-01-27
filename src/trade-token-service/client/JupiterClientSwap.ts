@@ -89,10 +89,10 @@ export class JupiterClientSwap {
     }
 
 
-    async sendTransaction(swapTransaction: any, swapUserKeypair:any, lastValidBlockHeight:any) {
+    async sendTransaction(swapTransaction: any, swapUserKeypair:any, lastValidBlockHeight:any): Promise<string> {
         const transaction = VersionedTransaction.deserialize(Buffer.from(swapTransaction, 'base64'))
+
         const bhInfo = await this.connection.getLatestBlockhashAndContext({ commitment: "finalized" });
-        
         // transaction.recentBlockhash  = bhInfo.value.blockhash;
         // transaction.feePayer = swapUserKeypair.publicKey;
 
@@ -123,10 +123,13 @@ export class JupiterClientSwap {
         }
         
         console.log("Confirmed: ", signature);
+        
+        return signature
+
         } catch (error) {
             console.error("Failed: ", error);
         throw error;
-        } 
+        }
 
     }
 
