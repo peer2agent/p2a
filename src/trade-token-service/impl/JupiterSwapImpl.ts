@@ -1,5 +1,5 @@
 import { Keypair, PublicKey} from '@solana/web3.js';
-import { InputSwapDTO } from '../dto/InputSwapDTO'; // Adjust the import path as necessary
+import { InputSwapDTO } from '../dto/InputSwapDTO';
 import { JupiterClientSwap } from '../client/JupiterClientSwap';
 
 export class JupiterImpl {
@@ -25,6 +25,7 @@ export class JupiterImpl {
             const {swapTransaction, lastValidBlockHeight} = await this.jupyterClient.fetchSwapTransaction(this.swapUserKeypair, ownerMintTokenAccount, swapInfo)
             
             console.log("swapTransaction -> ",swapTransaction)
+
             console.log("lastValidBlockHeight -> ",lastValidBlockHeight)
             
             await this.jupyterClient.sendTransaction(swapTransaction,this.swapUserKeypair, lastValidBlockHeight)

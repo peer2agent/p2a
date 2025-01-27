@@ -8,30 +8,45 @@ export class RealiseSwap {
 
     public async usecase(trackingInfoInputDTO:TrackingInfoInputDTO,): Promise<any> {
 
-        var trackingInfo = new WalletTrackerImpl()
+        var trackingInfo = new WalletTrackerImpl(trackingInfoInputDTO.apiKey, trackingInfoInputDTO.webhookURL)
 
-        var swapHistory = await trackingInfo.initiateServer(trackingInfoInputDTO)
-        
-        //TODO DEIXAR COMO ESCOLHER TOKEN ? ()
-        swapHistory[0].id
+        const walletOwner = Keypair.generate();
 
-        const wallet = Keypair.generate();
+        console.log("Public Key:", walletOwner.publicKey.toBase58()); 
+        console.log("Secret Key:", Array.from(walletOwner.secretKey));
 
-        console.log("Public Key:", wallet.publicKey.toBase58()); 
-        console.log("Secret Key:", Array.from(wallet.secretKey));
+        try {
+            trackingInfoInputDTO.trackedWallet.map(async (wallet) => {
+              wallet.wallet
+      
+              var swapHistory = await trackingInfo.initiateServer(wallet.wallet);
 
-        const trade = new JupiterImpl({
-            outputMintTokenAddress: new PublicKey(swapHistory[0].id),
-            inputMintTokenAddress: new PublicKey("So11111111111111111111111111111111111111112"),
-            ownerPublicKey: wallet.publicKey,
-            connection: new Connection(trackingInfoInputDTO.configTrade!!),
-            feeAccount: wallet.publicKey,
-            trackingAccount : wallet.publicKey
-        }, Keypair.generate());
-        
+              console.log("Quantidade de swaps que serão realizados -> ", swapHistory.length)
+              console.log("swapHistory -> ", swapHistory)
+
+              swapHistory.map(async(token)=>{ 
+                  
+                  const trade = new JupiterImpl({
+                      outputMintTokenAddress: new PublicKey(token.id),
+                      inputMintTokenAddress: new PublicKey("So11111111111111111111111111111111111111112"),
+                      ownerPublicKey: walletOwner.publicKey,
+                      connection: new Connection(trackingInfoInputDTO.configTrade!!),
+                      feeAccount: walletOwner.publicKey,
+                      trackingAccount : walletOwner.publicKey
+                  }, Keypair.generate());
+
+                  console.log("Realise Swap: ", wallet.wallet ,"-->", wallet.value * token.percentage )
     
-        //TODO DEIXAR VALUE DINAMICO ()
-        return await trade.realiseSwap(1000);
+                  await trade.realiseSwap(wallet.value * token.percentage);
+                  });
+                }) 
+            } 
+        catch(error){
+            console.error(`[${new Date().toISOString()}] Error during RealiseSwap execution.`, error);
+        }
+        finally {
+            return "initiated"
+        }
+         
     }
-
 }

@@ -5,7 +5,6 @@ import { HistorySwapTokenDTO } from "../dto/HistorySwapTokenDTO";
 
 export class WalletTrackerClient {
   private readonly helius: Helius;
-  private readonly apiKey: string;
   private readonly trackedWallet: string;
   private readonly webhookURL: string;
   public initialAssetDistribution: any;
@@ -13,15 +12,12 @@ export class WalletTrackerClient {
 
   constructor(apiKey: string, trackedWallet: string, webhookURL: string) {
     this.helius = new Helius(apiKey);
-    this.apiKey = apiKey;
     this.trackedWallet = trackedWallet;
     this.webhookURL = webhookURL;
   }
 
   async getAssetsByOwner(wallet: string): Promise<any> {
-    console.log(
-      `\n[${this.formatTimestamp()}] Starting fetch for wallet: ${wallet}`
-    );
+    console.log(`\n[${this.formatTimestamp()}] Starting fetch for wallet: ${wallet}`);
 
     try {
       const assets = (await this.helius.rpc.getAssetsByOwner({
@@ -156,8 +152,9 @@ export class WalletTrackerClient {
         symbol: symbol,
         totalPrice: totalPrice,
         quantity: quantity,
-        percentage:
-          percentage < 1 ? percentage.toPrecision(3) : percentage.toFixed(2),
+        percentage: parseFloat(
+            percentage < 1 ? percentage.toPrecision(3) : percentage.toFixed(2)
+        ),
       };
     });
 
@@ -170,21 +167,22 @@ export class WalletTrackerClient {
       symbol: "SOL",
       totalPrice: nativeBalancePrice,
       quantity: solQuantity,
-      percentage:
+      percentage: parseFloat(
         nativePercentage < 1
           ? nativePercentage.toPrecision(3)
-          : nativePercentage.toFixed(2),
+          : nativePercentage.toFixed(2)
+      ),
     });
 
     console.log(`\n[${this.formatTimestamp()}] Asset Distribution:`);
-    distribution.forEach((d: any) => {
+    distribution.forEach((historySwapTokenDTO: HistorySwapTokenDTO) => {
       console.log(
         `Asset Details:\n` +
-          `  - ID: ${d.id}\n` +
-          `  - Symbol: ${d.symbol}\n` +
-          `  - Quantity: ${d.quantity.toFixed(6)}\n` +
-          `  - Total Price: ${d.totalPrice.toFixed(2)} USDC\n` +
-          `  - Distribution: ${d.percentage}%\n`
+          `  - ID: ${historySwapTokenDTO.id}\n` +
+          `  - Symbol: ${historySwapTokenDTO.symbol}\n` +
+          `  - Quantity: ${historySwapTokenDTO.quantity.toFixed(6)}\n` +
+          `  - Total Price: ${historySwapTokenDTO.totalPrice.toFixed(2)} USDC\n` +
+          `  - Distribution: ${historySwapTokenDTO.percentage}%\n`
       );
     });
 
