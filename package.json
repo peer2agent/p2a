@@ -1,9 +1,9 @@
 {
     "name": "wallet-tracker-sol",
     "version": "1.0.0",
-    "main": "index.js",
+    "main": "src/web/tracking-wallet/routes-v1.ts",
     "scripts": {
-        "start": "ts-node index.ts",
+        "start": "ts-node src/web/tracking-wallet/routes-v1.ts",
         "test-webhook": "ts-node extract_webhook_data.ts"
     },
     "keywords": [],
@@ -11,12 +11,17 @@
     "license": "ISC",
     "description": "",
     "dependencies": {
+        "@jup-ag/api": "^6.0.36",
+        "@project-serum/serum": "^0.13.65",
+        "@solana/spl-token": "^0.4.9",
+        "@solana/web3.js": "^1.98.0",
         "@types/express": "^5.0.0",
         "axios": "^1.7.7",
         "body-parser": "^1.20.3",
-        "dotenv": "^16.4.5",
+        "dotenv": "^16.4.7",
         "express": "^4.21.1",
-        "helius-sdk": "^1.4.0"
+        "helius-sdk": "^1.4.0",
+        "wallet-tracker-sol": "file:"
     },
     "devDependencies": {
         "@types/node": "^22.9.0",
