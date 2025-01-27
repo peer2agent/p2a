@@ -1,13 +1,49 @@
 import express from "express";
+import { TrackingWalletUseCase } from "../../usecase/impl/TrackingWalletUseCase";
 import fs from "fs";
 import dotenv from "dotenv";
+import { BotTradeUseCase } from "../../usecase/impl/BotTradeUseCase";
+import { RealiseSwap } from "../../usecase/impl/RealiseSwapUseCase";
+import { TrackingInfoInputDTO } from "../../input/dto/TrackingInfoInputDTO";
 
 dotenv.config();
 
 const app = express();
-const PORT = 3000;
 
 app.use(express.json());
+
+app.post("/tracking", async (req, res) => {
+
+  var message = req.body
+
+  var tracker = new TrackingWalletUseCase();
+
+  var distribution = await tracker.usecase(message);
+
+  res.send(distribution);
+});
+
+app.post("/start-bot", (req, res) => {
+
+  var bot = new BotTradeUseCase();
+
+  bot.usecase(req.body);
+
+  res.send("Bot is started");
+})
+
+
+
+app.post("/realise-trade", async (req, res) => {
+
+  var realiseSwap = new RealiseSwap();
+  var tracking: TrackingInfoInputDTO = req.body
+  
+  await realiseSwap.usecase(tracking);
+
+  res.send("ok");
+})
+
 
 app.post("/webhook", (req: any, res: any) => {
   try {
@@ -52,7 +88,7 @@ function processSwap(webhookData: any) {
   tokenTransfers.forEach((transfer: any, index: number) => {
     if (transfer.fromUserAccount === process.env.WALLET_ADDRESS) {
       console.log("SELL: ");
-    } 
+    }
     if (transfer.toUserAccount === process.env.WALLET_ADDRESS) {
       console.log(`[${formatTimestamp()}] BUY: `);
     }
@@ -60,7 +96,9 @@ function processSwap(webhookData: any) {
     console.log(`- Token Amount: ${transfer.tokenAmount}`);
     console.log(`- From: ${transfer.fromUserAccount}`);
     console.log(`- To: ${transfer.toUserAccount}`);
-    console.log(`- BullX Link: https://bullx.io/terminal?chainId=1399811149&address=${transfer.mint}`);
+    console.log(
+      `- BullX Link: https://bullx.io/terminal?chainId=1399811149&address=${transfer.mint}`
+    );
   });
   console.log(`Signature: ${signature}`);
   console.log("------------------------");
@@ -90,7 +128,9 @@ function processTransfer(webhookData: any) {
     // console.log(`Transferência ${index + 1}:`);
     console.log(`- Amount: ${transfer.amount}`);
     console.log(`- Token Address: ${transfer.mint}`);
-    console.log(`- Solscan link to transaction: https://solscan.io/tx/${signature}`);
+    console.log(
+      `- Solscan link to transaction: https://solscan.io/tx/${signature}`
+    );
   });
   console.log(`Transfer Signature: ${signature}`);
   console.log("-------------------------------");
@@ -139,8 +179,7 @@ function formatTimestamp(): string {
   return new Date().toISOString();
 }
 
-export default function startServer() {
-  app.listen(PORT, () => {
-    console.log(`Servidor rodando em http://localhost:${PORT}`);
-  });
-}
+const port = 3000; // Defina a porta que deseja usar
+app.listen(port, () => {
+  console.log(`Server is running at http://localhost:${port}`);
+});
