@@ -1,57 +1,45 @@
 import { WalletTrackerClient } from "../client/WalletTrackerClient";
-import { TrackingInfoInputDTO } from "../../input/dto/TrackingInfoInputDTO";
 import { HistorySwapTokenDTO } from "../dto/HistorySwapTokenDTO";
 
 export class WalletTrackerImpl {
+  public webhookURL: string;
+  public apiKey: string;
+
+  constructor(apiKey: string, webhookURL: string) {
+    this.webhookURL = webhookURL;
+    this.apiKey = apiKey;
+   }
+
   async initiateServer(
-    trackingInfoInputDTO: TrackingInfoInputDTO
+    wallet: string
   ): Promise<HistorySwapTokenDTO[]> {
-    const { apiKey, trackedWallet, webhookURL } = trackingInfoInputDTO;
-    const obfuscatedApiKey = `${apiKey.slice(0, 3)}***${apiKey.slice(-3)}`;
-    console.log(
-      `\n[${new Date().toISOString()}] Initializing WalletTracker...`
-    );
+    
+
+    const obfuscatedApiKey = `${this.apiKey.slice(0, 3)}***${this.apiKey.slice(-3)}`;
+    
+    console.log(`\n[${new Date().toISOString()}] Initializing WalletTracker...`);
+    
+    const tracker = new WalletTrackerClient(this.apiKey, wallet, this.webhookURL);
+
     console.log(`[${new Date().toISOString()}] API Key: ${obfuscatedApiKey}`);
-    console.log(
-      `[${new Date().toISOString()}] Wallet Address: ${trackedWallet}\n`
-    );
-
-    const tracker = new WalletTrackerClient(apiKey, trackedWallet, webhookURL);
-
+    console.log(`[${new Date().toISOString()}] Wallet Address: ${wallet}\n`);
+    console.log(`[${new Date().toISOString()}] Checking and creating webhook if needed...`);
     try {
-      console.log(
-        `[${new Date().toISOString()}] Checking and creating webhook if needed...`
-      );
-      await tracker.createWebhookIfNotExists();
 
-      console.log(
-        `[${new Date().toISOString()}] Fetching assets for wallet...`
-      );
-      await tracker.getAssetsByOwner(trackedWallet);
-      tracker.calculateAssetDistribution();
+        await tracker.createWebhookIfNotExists();
+  
+        console.log(`[${new Date().toISOString()}] Fetching assets for wallet...`);
+  
+        await tracker.getAssetsByOwner(wallet);
+  
+        tracker.calculateAssetDistribution();
 
-      // const filePath = "./webhook.json";
-      // const tokenTransferData = parseJsonAndExtractTokenTransfers(
-      //   filePath
-      // );
+        console.log(`[${new Date().toISOString()}] Process completed successfully.\n`);
 
-      // if (tokenTransferData) {
-      //     console.log(
-      //         `[${new Date().toISOString()}] Token Transfer Data:`,
-      //         JSON.stringify(tokenTransferData, null, 2)
-      //     );
-      // }
-
-      console.log(
-        `[${new Date().toISOString()}] Process completed successfully.\n`
-      );
-    } catch (error) {
-      console.error(
-        `[${new Date().toISOString()}] Error during WalletTracker execution.`,
-        error
-      );
+      } catch (error) {
+      console.error(`[${new Date().toISOString()}] Error during WalletTracker execution.`, error);
     } finally {
-      return tracker.initialAssetDistribution;
+      return tracker.initialAssetDistribution
     }
   }
 }

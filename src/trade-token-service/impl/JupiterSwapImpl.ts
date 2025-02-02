@@ -1,31 +1,28 @@
 import { Keypair, PublicKey} from '@solana/web3.js';
-import { InputSwapDTO } from '../dto/InputSwapDTO'; // Adjust the import path as necessary
+import { InputSwapDTO } from '../dto/InputSwapDTO';
 import { JupiterClientSwap } from '../client/JupiterClientSwap';
 
 export class JupiterImpl {
     private jupyterClient:JupiterClientSwap
     private swapUserKeypair:Keypair
+    private outputMintTokenAddress: PublicKey;
+    private inputMintTokenAddress: PublicKey 
 
-    constructor(inputSwap:InputSwapDTO, swapUserKeypair:Keypair ) {  
-        this.jupyterClient = new JupiterClientSwap(inputSwap)
+    constructor(inputSwap:InputSwapDTO, swapUserKeypair:Keypair ) {
+        
+        const { outputMintTokenAddress, inputMintTokenAddress, connection } = inputSwap;
+        this.jupyterClient = new JupiterClientSwap(connection)
+        this.inputMintTokenAddress = inputMintTokenAddress
+        this.outputMintTokenAddress = outputMintTokenAddress
         this.swapUserKeypair = swapUserKeypair
     }
     
     async realiseSwap(amount:number) {
         try {
-        
-            const ownerMintTokenAccount = await this.jupyterClient.getOwnerMintTokenAccount()
+            
+            const swapInfo = await this.jupyterClient.fetchSwapInfo(this.inputMintTokenAddress.toString(),this.outputMintTokenAddress.toString(),amount)
 
-            console.log("ownerMintTokenAccount -> ",ownerMintTokenAccount)
-            
-            const swapInfo = await this.jupyterClient.fetchSwapInfo(amount)
-
-            console.log("swapInfo -> ",swapInfo)
-            
-            const {swapTransaction, lastValidBlockHeight} = await this.jupyterClient.fetchSwapTransaction(this.swapUserKeypair, ownerMintTokenAccount, swapInfo)
-            
-            console.log("swapTransaction -> ",swapTransaction)
-            console.log("lastValidBlockHeight -> ",lastValidBlockHeight)
+            const {swapTransaction, lastValidBlockHeight} = await this.jupyterClient.fetchSwapTransaction(this.swapUserKeypair, swapInfo)
             
             await this.jupyterClient.sendTransaction(swapTransaction,this.swapUserKeypair, lastValidBlockHeight)
         

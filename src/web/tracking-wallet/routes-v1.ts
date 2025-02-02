@@ -1,19 +1,41 @@
+import cors from "cors";
 import express from "express";
 import { TrackingWalletUseCase } from "../../usecase/impl/TrackingWalletUseCase";
 import fs from "fs";
 import dotenv from "dotenv";
-import { BotTradeUseCase } from "../../usecase/impl/BotTradeUseCase";
+import { TraderBotUseCase } from "../../usecase/impl/TraderBotUseCase";
 import { RealiseSwap } from "../../usecase/impl/RealiseSwapUseCase";
 import { TrackingInfoInputDTO } from "../../input/dto/TrackingInfoInputDTO";
 import { TransactionProcessorImpl } from "../../transaction-processor-service/impl/TransactionProcessorImpl";
 
 dotenv.config();
 
+// Extend the window interface to include solana
+interface SolanaWindow extends Window {
+  solana?: any;
+}
+
+
+
+declare const window: SolanaWindow;
+
 const app = express();
 
 app.use(express.json());
 
+
+// Configurar CORS para permitir a origem do frontend
+app.use(
+  cors({
+    origin: "http://localhost:5173", // Origem do frontend
+    methods: ["GET", "POST"],       // Métodos permitidos
+    allowedHeaders: ["Content-Type"], // Cabeçalhos permitidos
+  })
+);
+
+
 app.post("/tracking", async (req, res) => {
+
 
   var message = req.body
 
@@ -24,9 +46,12 @@ app.post("/tracking", async (req, res) => {
   res.send(distribution);
 });
 
+
+
+
 app.post("/start-bot", (req, res) => {
 
-  var bot = new BotTradeUseCase();
+  var bot = new TraderBotUseCase();
 
   bot.usecase(req.body);
 
