@@ -3,5 +3,5 @@ export interface HistorySwapTokenDTO {
     symbol: string,
     totalPrice: number,
     quantity: number,
-    percentage: string,
+    percentage: number,
   }

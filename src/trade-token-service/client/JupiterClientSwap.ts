@@ -1,54 +1,24 @@
-import { PublicKey, Connection, Keypair, VersionedTransaction } from '@solana/web3.js';
-import { getAssociatedTokenAddress, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { SwapInfoDTO } from '../dto/SwapInfoDTO';   
-import { InputSwapDTO } from '../dto/InputSwapDTO';
+import {Connection, Keypair, VersionedTransaction } from '@solana/web3.js';
+import { SwapInfoDTO } from '../dto/SwapInfoDTO';  
+import { Wallet } from '@project-serum/anchor';
 
 
 export class JupiterClientSwap {
-    private outputMintTokenAddress: PublicKey; //usdc
-    private inputMintTokenAddress: PublicKey //sol 
-    private ownerPublicKey: PublicKey
     private connection: Connection
-    private feeAccount: PublicKey
-    private trackingAccount : PublicKey 
 
-    constructor(inputSwap:InputSwapDTO) {
-        const {
-        outputMintTokenAddress,
-        inputMintTokenAddress,
-        ownerPublicKey,
-        connection,
-        feeAccount,
-        trackingAccount} = inputSwap;
-
-        this.outputMintTokenAddress = outputMintTokenAddress 
-        this.inputMintTokenAddress = inputMintTokenAddress 
-        this.ownerPublicKey = ownerPublicKey 
-        this.connection = connection 
-        this.feeAccount = feeAccount 
-        this.trackingAccount = trackingAccount  
-
+    constructor(connection: Connection) {
+        this.connection = connection;
     }
 
 
-    async getOwnerMintTokenAccount() {
-        const ownerMintTokenAccount = await getAssociatedTokenAddress(
-            this.outputMintTokenAddress,
-            this.ownerPublicKey,
-            true,
-            TOKEN_PROGRAM_ID,// ver se tem dev
-            ASSOCIATED_TOKEN_PROGRAM_ID
-        );
-        return ownerMintTokenAccount
-    }
+    async fetchSwapInfo(inputMintTokenAddress:string,outputMintTokenAddress:string,amount :number) {
 
-    async fetchSwapInfo(amount :number) {
-        var url = `https://quote-api.jup.ag/v6/quote?inputMint=${this.inputMintTokenAddress}&outputMint=${this.outputMintTokenAddress}&amount=${amount}&swapMode=ExactOut&slippageBps=50`
+        console.log("fetchSwapInfo2")
+        
+        var url = `https://quote-api.jup.ag/v6/quote?inputMint=${inputMintTokenAddress}&outputMint=${outputMintTokenAddress}&amount=${amount}&swapMode=ExactOut&slippageBps=1`
         console.log(url)
         const response = await fetch(url)
         const data = await response.json()
-
-        console.log("data -> ",data)
 
         return {
             inAmount: data.inAmount,
@@ -57,77 +27,91 @@ export class JupiterClientSwap {
         };
     }
 
-    async fetchSwapTransaction(swapUserKeypair:Keypair, ownerMintTokenAccount:PublicKey, swapInfo:SwapInfoDTO) {
+    async fetchSwapTransaction(swapUserKeypair:Keypair, swapInfo:SwapInfoDTO) {
         
-        const requestBody = {
-            userPublicKey: swapUserKeypair.publicKey.toBase58(),
-            wrapAndUnwrapSol: true,
-            useSharedAccounts: true,
-            feeAccount: this.feeAccount.toBase58(), // Use actual key
-            trackingAccount: this.trackingAccount.toBase58(), // Use actual key
-            prioritizationFeeLamports: 0, // No prioritization fee in this case
-            asLegacyTransaction: false,
-            useTokenLedger: false,
-            destinationTokenAccount: ownerMintTokenAccount.toBase58(),
-            dynamicComputeUnitLimit: true,
-            skipUserAccountsRpcCalls: true,
-            quoteResponse: swapInfo.quoteResponse
+        const quoteResponse=swapInfo.quoteResponse
 
-        }
+        const swapResponse = await (
+            await fetch('https://quote-api.jup.ag/v6/swap', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                // quoteResponse from /quote api
+                quoteResponse,
+                // user public key to be used for the swap
+                userPublicKey: swapUserKeypair.publicKey.toString(),
+                // auto wrap and unwrap SOL. default is true
+                wrapAndUnwrapSol: true,
+                // Optional, use if you want to charge a fee.  feeBps must have been passed in /quote API.
+                feeAccount: swapUserKeypair.publicKey.toString(),
 
-        const response = await fetch('https://quote-api.jup.ag/v6/swap', {
-            method: 'POST',
-            headers: {
-            'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(requestBody),
-        });
+                prioritizationFeeLamports: 20000
+              })
+            })
+          ).json();
 
-        const { swapTransaction, lastValidBlockHeight } = await response.json();
+        const { swapTransaction, lastValidBlockHeight } = swapResponse;
+
         return { swapTransaction, lastValidBlockHeight };
 
     }
 
+    async sendTransaction(swapTransaction: any, swapUserKeypair: Keypair, lastValidBlockHeight: number,): Promise<any> {
 
-    async sendTransaction(swapTransaction: any, swapUserKeypair:any, lastValidBlockHeight:any) {
-        const transaction = VersionedTransaction.deserialize(Buffer.from(swapTransaction, 'base64'))
-        const bhInfo = await this.connection.getLatestBlockhashAndContext({ commitment: "finalized" });
-        
-        // transaction.recentBlockhash  = bhInfo.value.blockhash;
-        // transaction.feePayer = swapUserKeypair.publicKey;
-
-        transaction.sign([swapUserKeypair]);
-
-        const simulation = await this.connection.simulateTransaction(transaction, { commitment: "finalized" });
-        if (simulation.value.err) {
-            throw new Error(`Simulation failed: ${simulation.value.err.toString()}`);
+        if (!swapTransaction) {
+            throw new Error("Received an undefined swapTransaction from Jupiter API");
         }
-
+        
         try {
-            const signature = await this.connection.sendTransaction(transaction, {
-            // NOTE: Adjusting maxRetries to a lower value for trading, as 20 retries can be too much
-            // Experiment with different maxRetries values based on your tolerance for slippage and speed
-            // Reference: https://solana.com/docs/core/transactions#retrying-transactions
-            maxRetries: 5,
-            skipPreflight: true,
-            preflightCommitment: "finalized",
-        });
-        const confirmation = await this.connection.confirmTransaction({
-            signature,
-            blockhash: bhInfo.value.blockhash,
-            lastValidBlockHeight: bhInfo.value.lastValidBlockHeight,
-        }, "finalized");
-        
-        if (confirmation.value.err) {
-            throw new Error(`Transaction not confirmed: ${confirmation.value.err.toString()}`);
-        }
-        
-        console.log("Confirmed: ", signature);
+            const wallet = new Wallet(swapUserKeypair);
+    
+            // Deserialize the transaction
+            const swapTransactionBuf = Buffer.from(swapTransaction, 'base64');
+            const transaction = VersionedTransaction.deserialize(swapTransactionBuf);
+    
+            // Check if the transaction is still valid
+            const currentSlot = await this.connection.getSlot();
+            if (currentSlot > lastValidBlockHeight) {
+                console.warn("Transaction expired before being sent, retrying with new blockhash...");
+                const { blockhash, lastValidBlockHeight: newLastValidBlockHeight } = await this.connection.getLatestBlockhash();
+                transaction.message.recentBlockhash = blockhash;
+                lastValidBlockHeight = newLastValidBlockHeight;
+            }
+    
+            transaction.sign([wallet.payer]);
+    
+            const rawTransaction = transaction.serialize();
+            const txid = await this.connection.sendRawTransaction(rawTransaction, {
+                skipPreflight: false,
+                maxRetries: 2,
+            });
+    
+            console.log("Transaction sent, checking status...");
+    
+            let status = await this.connection.getSignatureStatus(txid, { searchTransactionHistory: true });
+            let retries = 15;
+    
+            while (!status?.value?.confirmationStatus && retries > 0) {
+                console.log(`Waiting for confirmation... ${retries} attempts left.`);
+                await new Promise(res => setTimeout(res, 2000)); // Wait 2 seconds
+                status = await this.connection.getSignatureStatus(txid, { searchTransactionHistory: true });
+                retries--;
+            }
+    
+            if (!status?.value?.confirmationStatus) {
+                console.warn("Transaction might have been processed but confirmation failed.");
+            }
+    
+            console.log(`Transaction successful: https://solscan.io/tx/${txid}`);
+            return txid;
+    
         } catch (error) {
-            console.error("Failed: ", error);
-        throw error;
-        } 
-
+            console.error("Failed to send transaction:", error);
+            throw error;
+        }
     }
 
-}
+
+    }
