@@ -13,13 +13,10 @@ export class TrackingWalletUseCase implements TrackingService {
 
         await Promise.all(
             trackingInfoInputDTO.trackedWallet.map(async (wallet) => {
-                var x =await trackingInfo.initiateServer(wallet.wallet);
-                trackingTokens.push(...x)
-
+                trackingTokens.push(...await trackingInfo.initiateServer(wallet.wallet))
             })
-            );
-
-        return await trackingTokens
+        );
+        return trackingTokens
     }
 
 }
