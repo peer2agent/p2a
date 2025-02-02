@@ -6,6 +6,7 @@ import dotenv from "dotenv";
 import { TraderBotUseCase } from "../../usecase/impl/TraderBotUseCase";
 import { RealiseSwap } from "../../usecase/impl/RealiseSwapUseCase";
 import { TrackingInfoInputDTO } from "../../input/dto/TrackingInfoInputDTO";
+import { TransactionProcessorImpl } from "../../transaction-processor-service/impl/TransactionProcessorImpl";
 
 dotenv.config();
 
@@ -70,135 +71,136 @@ app.post("/realise-trade", async (req, res) => {
 })
 
 
-app.post("/webhook", (req: any, res: any) => {
+app.post("/webhook", async (req, res) => {
+  console.log("------------------New transaction-----------------")
   try {
-    const webhookData = req.body;
-
-    // Validação básica
-    if (!Array.isArray(webhookData) || !webhookData[0]) {
-      console.error("Formato inválido de webhook.");
-      return res.status(400).send("Webhook data format invalid.");
+    const processor = new TransactionProcessorImpl(process.env.WALLET_ADDRESS!);
+    const transaction = processor.processTransaction(req.body);
+    
+    if (!transaction) {
+      console.log("Unrecognized transaction data:", JSON.stringify(req.body, null, 2));
+      res.status(200).json({
+        status: "success",
+        message: "Unrecognized transaction logged"
+      });
+      return;
     }
 
-    const type = webhookData[0].type?.toUpperCase();
+    console.log("Processed Transaction:", JSON.stringify(transaction, null, 2));
 
-    switch (type) {
-      case "SWAP":
-        processSwap(webhookData);
-        break;
-      case "TRANSFER":
-        processTransfer(webhookData);
-        break;
-      case "UNKNOWN":
-        processUnknown(webhookData);
-        break;
-      default:
-        console.error("Tipo de webhook não identificado.");
-        return res.status(400).send("Unknown webhook type.");
-    }
+    res.status(200).json({
+      status: "success",
+      data: transaction
+    });
 
-    res.status(200).send("Webhook received and processed.");
-  } catch (error) {
-    console.error("Erro ao processar webhook:", error);
-    res.status(500).send("Internal server error.");
+  } catch (err: unknown) {
+    console.log("Unprocessable transaction data:", JSON.stringify(req.body, null, 2));
+    res.status(200).json({
+      status: "success",
+      message: "Unprocessable transaction logged"
+    });
   }
 });
 
+//nao esta mais sendo usado
 // Função para processar "swap"
-function processSwap(webhookData: any) {
-  const tokenTransfers = webhookData[0].tokenTransfers || [];
-  const signature = webhookData[0].signature;
+// function processSwap(webhookData: any) {
+//   const tokenTransfers = webhookData[0].tokenTransfers || [];
+//   const signature = webhookData[0].signature;
 
-  console.log("--- SWAP ---");
-  tokenTransfers.forEach((transfer: any, index: number) => {
-    if (transfer.fromUserAccount === process.env.WALLET_ADDRESS) {
-      console.log("SELL: ");
-    }
-    if (transfer.toUserAccount === process.env.WALLET_ADDRESS) {
-      console.log(`[${formatTimestamp()}] BUY: `);
-    }
-    console.log(`- Token Address: ${transfer.mint}`);
-    console.log(`- Token Amount: ${transfer.tokenAmount}`);
-    console.log(`- From: ${transfer.fromUserAccount}`);
-    console.log(`- To: ${transfer.toUserAccount}`);
-    console.log(
-      `- BullX Link: https://bullx.io/terminal?chainId=1399811149&address=${transfer.mint}`
-    );
-  });
-  console.log(`Signature: ${signature}`);
-  console.log("------------------------");
+//   console.log("--- SWAP ---");
+//   tokenTransfers.forEach((transfer: any, index: number) => {
+//     if (transfer.fromUserAccount === process.env.WALLET_ADDRESS) {
+//       console.log("SELL: ");
+//     }
+//     if (transfer.toUserAccount === process.env.WALLET_ADDRESS) {
+//       console.log(`[${formatTimestamp()}] BUY: `);
+//     }
+//     console.log(`- Token Address: ${transfer.mint}`);
+//     console.log(`- Token Amount: ${transfer.tokenAmount}`);
+//     console.log(`- From: ${transfer.fromUserAccount}`);
+//     console.log(`- To: ${transfer.toUserAccount}`);
+//     console.log(
+//       `- BullX Link: https://bullx.io/terminal?chainId=1399811149&address=${transfer.mint}`
+//     );
+//   });
+//   console.log(`Signature: ${signature}`);
+//   console.log("------------------------");
 
-  const processedData = {
-    type: "swap",
-    signature: signature,
-    tokenTransfers,
-  };
+//   const processedData = {
+//     type: "swap",
+//     signature: signature,
+//     tokenTransfers,
+//   };
 
-  fs.writeFileSync("swap.json", JSON.stringify(processedData, null, 2));
-}
+//   fs.writeFileSync("swap.json", JSON.stringify(processedData, null, 2));
+// }
 
+//nao esta mais sendo usado
 // Função para processar "transfer"
-function processTransfer(webhookData: any) {
-  const tokenTransfers = webhookData[0].tokenTransfers || [];
-  const signature = webhookData[0].signature;
+// function processTransfer(webhookData: any) {
+//   const tokenTransfers = webhookData[0].tokenTransfers || [];
+//   const signature = webhookData[0].signature;
 
-  console.log("--- TRANSFER ---");
-  tokenTransfers.forEach((transfer: any, index: number) => {
-    if (transfer.fromUserAccount === process.env.WALLET_ADDRESS) {
-      console.log("SEND: ");
-    }
-    if (transfer.toUserAccount === process.env.WALLET_ADDRESS) {
-      console.log("RECEIVE: ");
-    }
-    // console.log(`Transferência ${index + 1}:`);
-    console.log(`- Amount: ${transfer.amount}`);
-    console.log(`- Token Address: ${transfer.mint}`);
-    console.log(
-      `- Solscan link to transaction: https://solscan.io/tx/${signature}`
-    );
-  });
-  console.log(`Transfer Signature: ${signature}`);
-  console.log("-------------------------------");
+//   console.log("--- TRANSFER ---");
+//   tokenTransfers.forEach((transfer: any, index: number) => {
+//     if (transfer.fromUserAccount === process.env.WALLET_ADDRESS) {
+//       console.log("SEND: ");
+//     }
+//     if (transfer.toUserAccount === process.env.WALLET_ADDRESS) {
+//       console.log("RECEIVE: ");
+//     }
+//     // console.log(`Transferência ${index + 1}:`);
+//     console.log(`- Amount: ${transfer.amount}`);
+//     console.log(`- Token Address: ${transfer.mint}`);
+//     console.log(
+//       `- Solscan link to transaction: https://solscan.io/tx/${signature}`
+//     );
+//   });
+//   console.log(`Transfer Signature: ${signature}`);
+//   console.log("-------------------------------");
 
-  // Salvar JSON formatado
-  const processedData = {
-    type: "transfer",
-    signature: signature,
-    tokenTransfers,
-  };
+//   // Salvar JSON formatado
+//   const processedData = {
+//     type: "transfer",
+//     signature: signature,
+//     tokenTransfers,
+//   };
 
-  fs.writeFileSync("transfer.json", JSON.stringify(processedData, null, 2));
-}
+//   fs.writeFileSync("transfer.json", JSON.stringify(processedData, null, 2));
+// }
 
+
+//nao esta mais sendo usado
 // Função para processar "unknown"
-function processUnknown(webhookData: any) {
-  const tokenTransfers = webhookData[0].tokenTransfers || [];
-  // const nativeTransfers = webhookData[0].nativeTransfers || [];
-  const signature = webhookData[0].signature;
+// function processUnknown(webhookData: any) {
+//   const tokenTransfers = webhookData[0].tokenTransfers || [];
+//   // const nativeTransfers = webhookData[0].nativeTransfers || [];
+//   const signature = webhookData[0].signature;
 
-  console.log("--- UNKNOWN ---");
-  if (tokenTransfers.length > 0) {
-    console.log("Token Transfers:");
-    tokenTransfers.forEach((transfer: any, index: number) => {
-      console.log(`Transferência ${index + 1}:`);
-      console.log(`- Mint: ${transfer.mint}`);
-      console.log(`- Token Amount: ${transfer.tokenAmount}`);
-      console.log(`- From: ${transfer.fromUserAccount}`);
-      console.log(`- To: ${transfer.toUserAccount}`);
-    });
-  }
-  console.log(`Signature: ${signature}`);
-  console.log("---------------------------");
+//   console.log("--- UNKNOWN ---");
+//   if (tokenTransfers.length > 0) {
+//     console.log("Token Transfers:");
+//     tokenTransfers.forEach((transfer: any, index: number) => {
+//       console.log(`Transferência ${index + 1}:`);
+//       console.log(`- Mint: ${transfer.mint}`);
+//       console.log(`- Token Amount: ${transfer.tokenAmount}`);
+//       console.log(`- From: ${transfer.fromUserAccount}`);
+//       console.log(`- To: ${transfer.toUserAccount}`);
+//     });
+//   }
+//   console.log(`Signature: ${signature}`);
+//   console.log("---------------------------");
 
-  // Salvar JSON formatado
-  const processedData = {
-    type: "unknown",
-    signature: signature,
-    tokenTransfers,
-  };
+//   // Salvar JSON formatado
+//   const processedData = {
+//     type: "unknown",
+//     signature: signature,
+//     tokenTransfers,
+//   };
 
-  fs.writeFileSync("unknown.json", JSON.stringify(processedData, null, 2));
-}
+//   fs.writeFileSync("unknown.json", JSON.stringify(processedData, null, 2));
+// }
 
 function formatTimestamp(): string {
   return new Date().toISOString();
