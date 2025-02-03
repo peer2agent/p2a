@@ -1,52 +1,59 @@
 import {JupiterImpl} from "../../trade-token-service/impl/JupiterSwapImpl";
-import { Connection, Keypair, PublicKey} from "@solana/web3.js";
+import { Connection, Keypair, PublicKey,LAMPORTS_PER_SOL} from "@solana/web3.js";
+import bs58 from 'bs58';
 import { WalletTrackerImpl } from "../../wallet-tracker-service/impl/WalletTrackerImpl";
 import { TrackingInfoInputDTO } from "../../input/dto/TrackingInfoInputDTO";
 
 
 export class RealiseSwap {
-
-    public async usecase(trackingInfoInputDTO:TrackingInfoInputDTO,): Promise<any> {
-
-        var trackingInfo = new WalletTrackerImpl(trackingInfoInputDTO.apiKey, trackingInfoInputDTO.webhookURL)
-
-        const walletOwner = Keypair.generate();
-
-        console.log("Public Key:", walletOwner.publicKey.toBase58()); 
-        console.log("Secret Key:", Array.from(walletOwner.secretKey));
+    public async usecase(trackingInfoInputDTO: TrackingInfoInputDTO): Promise<any> {
+        const trackingInfo = new WalletTrackerImpl(trackingInfoInputDTO.apiKey, trackingInfoInputDTO.webhookURL);
+        const keypairBase58 = process.env.SECRET_KEY!!;
+        const keypairBytes = bs58.decode(keypairBase58);
+        const keypair = Keypair.fromSecretKey(keypairBytes);
 
         try {
-            trackingInfoInputDTO.trackedWallet.map(async (wallet) => {
-              wallet.wallet
-      
-              var swapHistory = await trackingInfo.initiateServer(wallet.wallet);
+            await Promise.all(trackingInfoInputDTO.trackedWallet.map(async (wallet) => {
+                const swapHistory = await trackingInfo.initiateServer(wallet.wallet);
+                console.log("Quantidade de swaps que serão realizados -> ", swapHistory.length);
 
-              console.log("Quantidade de swaps que serão realizados -> ", swapHistory.length)
-              console.log("swapHistory -> ", swapHistory)
+                await Promise.all(swapHistory.map(async (token) => { 
+                    
+                    if (!token.id || token.id.length < 32 || token.id.length > 44) {
+                        console.error(`Skipping swap: Invalid token ID - ${token.id}`);
+                        return;
+                    }
 
-              swapHistory.map(async(token)=>{ 
-                  
-                  const trade = new JupiterImpl({
-                      outputMintTokenAddress: new PublicKey(token.id),
-                      inputMintTokenAddress: new PublicKey("So11111111111111111111111111111111111111112"),
-                      ownerPublicKey: walletOwner.publicKey,
-                      connection: new Connection(trackingInfoInputDTO.configTrade!!),
-                      feeAccount: walletOwner.publicKey,
-                      trackingAccount : walletOwner.publicKey
-                  }, Keypair.generate());
+                    const outputMint = new PublicKey(token.id);
+                    const swapAmount = BigInt(Math.floor(wallet.value * token.percentage * LAMPORTS_PER_SOL));
 
-                  console.log("Realise Swap: ", wallet.wallet ,"-->", wallet.value * token.percentage )
-    
-                  await trade.realiseSwap(wallet.value * token.percentage);
-                  });
-                }) 
-            } 
-        catch(error){
+                    if (!swapAmount || swapAmount <= 0) {
+                        console.warn(`Skipping swap due to low amount: ${swapAmount}`);
+                        return;
+                    }
+
+                    console.log(`Realise Swap: ${wallet.wallet} --> ${swapAmount}`);
+
+                    const trade = new JupiterImpl({
+                        outputMintTokenAddress: outputMint,
+                        inputMintTokenAddress: new PublicKey("So11111111111111111111111111111111111111112"),
+                        connection: new Connection(trackingInfoInputDTO.configTrade!!),
+                    }, keypair);
+
+                    try {
+                        await trade.realiseSwap(Number(swapAmount));
+                    } catch (error) {
+                        console.error(`Swap failed for ${wallet.wallet}:`, error);
+                    }
+                }));
+            }));
+        } catch (error) {
             console.error(`[${new Date().toISOString()}] Error during RealiseSwap execution.`, error);
+        } finally {
+            return "Completed RealiseSwap";
         }
-        finally {
-            return "initiated"
-        }
-         
     }
 }
+
+
+
