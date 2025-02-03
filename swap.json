@@ -1,23 +1,14 @@
 {
   "type": "swap",
-  "signature": "2w4q5KGodA5KZpDcVr6iqrmsozibxv7vkkDHfWo467Ug7bM6ZBVjxjRaRKa41HCCtdhsmiPhbjLYDdfzJVTMpbJN",
+  "signature": "5Tqm6UhJCR99D821gxdrAxVUGArHuYLKRXLor96eTacTbDTQSoheL3bMG9ZSe2LgV7BoxUpqYdKQKNFWM1QpabSa",
   "tokenTransfers": [
     {
-      "fromTokenAccount": "BXAMJdFcdqfWFh24dNEJPP8TvhrjW3bGSCjEeyEZs7Lk",
-      "fromUserAccount": "AmKoRjpAqKmTHeA4xvq3UDfCaUH5CgfMTLURS9y7CkxF",
-      "mint": "FH5JvCAYnBS789tn9QmvmB55Y5SCqog3YW3TVgW8pump",
-      "toTokenAccount": "EWiCuS3LhNyx7L5vc8cG98QgJ2GCrbAeed8nio8zLXhz",
-      "toUserAccount": "5Q544fKrFoe6tsEbD7S8EmxGTJYAKtTVhAW5Q5pge4j1",
-      "tokenAmount": 5628449.335808,
-      "tokenStandard": "Fungible"
-    },
-    {
-      "fromTokenAccount": "ekG9KGrxkpx8Mjaj9pMS4eWGjGuPRWDJqKwA7dXaBdZ",
-      "fromUserAccount": "5Q544fKrFoe6tsEbD7S8EmxGTJYAKtTVhAW5Q5pge4j1",
-      "mint": "So11111111111111111111111111111111111111112",
-      "toTokenAccount": "9StXpeZsbdDf9JySAMheVd35vCbyYq5KEkCQjdtRisuv",
-      "toUserAccount": "AmKoRjpAqKmTHeA4xvq3UDfCaUH5CgfMTLURS9y7CkxF",
-      "tokenAmount": 1.599966117,
+      "fromTokenAccount": "Af9kQxCHVthec4V5922vhrNeeZPY75BnmHGdSBRXSXhJ",
+      "fromUserAccount": "AQqCn6Hff4AMRYHoqn2dyUNe2bCUxS8XPLQAUbZ6fhr4",
+      "mint": "GU64Uv94o7ko7Jdt7r6R28YHKF7c6EtXxBotjYw7pump",
+      "toTokenAccount": "FDWCwPoV9gUwBhUjf9W8faMpYwb2Uu5rRmu7NKkPR6CM",
+      "toUserAccount": "3iWffK5sm7GtibBD2QUJCsvbnzmXoUxdnpjjJp2Ux3wA",
+      "tokenAmount": 213516.393979,
       "tokenStandard": "Fungible"
     }
   ]
