@@ -1,0 +1,45 @@
+import { WalletTrackerClient } from "../client/WalletTrackerClient";
+import { HistorySwapTokenDTO } from "../dto/HistorySwapTokenDTO";
+
+export class WalletTrackerImpl {
+  public webhookURL: string;
+  public apiKey: string;
+
+  constructor(apiKey: string, webhookURL: string) {
+    this.webhookURL = webhookURL;
+    this.apiKey = apiKey;
+   }
+
+  async initiateServer(
+    wallet: string
+  ): Promise<HistorySwapTokenDTO[]> {
+    
+
+    const obfuscatedApiKey = `${this.apiKey.slice(0, 3)}***${this.apiKey.slice(-3)}`;
+    
+    console.log(`\n[${new Date().toISOString()}] Initializing WalletTracker...`);
+    
+    const tracker = new WalletTrackerClient(this.apiKey, wallet, this.webhookURL);
+
+    console.log(`[${new Date().toISOString()}] API Key: ${obfuscatedApiKey}`);
+    console.log(`[${new Date().toISOString()}] Wallet Address: ${wallet}\n`);
+    console.log(`[${new Date().toISOString()}] Checking and creating webhook if needed...`);
+    try {
+
+        await tracker.createWebhookIfNotExists();
+  
+        console.log(`[${new Date().toISOString()}] Fetching assets for wallet...`);
+  
+        await tracker.getAssetsByOwner(wallet);
+  
+        tracker.calculateAssetDistribution();
+
+        console.log(`[${new Date().toISOString()}] Process completed successfully.\n`);
+
+      } catch (error) {
+      console.error(`[${new Date().toISOString()}] Error during WalletTracker execution.`, error);
+    } finally {
+      return tracker.initialAssetDistribution
+    }
+  }
+}
