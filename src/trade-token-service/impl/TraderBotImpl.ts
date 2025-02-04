@@ -41,15 +41,20 @@ export class TraderBotImpl {
         checkInterval,
         initialInputToken,
         initialInputAmount,
-        firstTradePrice,
         tokenMint,
-        solMint,
+        isSimulation
       } = config;
-
+      
       this.solanaConnection = new Connection(solanaEndpoint);
-      this.wallet = Keypair.fromSecretKey(secretKey);
+      
+
+      this.jupyterClient = new JupiterClientSwap(this.solanaConnection,isSimulation)
+      
+      this.solMint = new PublicKey("So11111111111111111111111111111111111111112");
+      
       this.tokenMint = tokenMint!!;
-      this.solMint = solMint!!;
+
+      this.wallet = Keypair.fromSecretKey(secretKey);
       
       this.usdcTokenAccount = getAssociatedTokenAddressSync(this.tokenMint,this.wallet.publicKey);
       
@@ -61,7 +66,6 @@ export class TraderBotImpl {
         this.checkInterval = checkInterval;
       }
       
-      this.jupyterClient = new JupiterClientSwap(this.solanaConnection)
        
       this.isSolInput = initialInputToken === SwapToken.SOL,
 
@@ -69,7 +73,6 @@ export class TraderBotImpl {
         inputMint:initialInputToken === SwapToken.SOL ? this.solMint.toBase58() : this.tokenMint.toBase58(),
         outputMint:initialInputToken === SwapToken.SOL ? this.tokenMint.toBase58() : this.solMint.toBase58(),
         amount: Math.floor(initialInputAmount ), //entrada para o swap 
-        nextTradeThreshold: Math.floor(firstTradePrice), //2x da meu input
         lastTokenTradeValue: 0,
         lastSolTradeValue: 0
       };
@@ -132,7 +135,11 @@ export class TraderBotImpl {
             const swapInfo = await this.jupyterClient.fetchSwapInfo(this.nextTrade.inputMint,this.nextTrade.outputMint,this.nextTrade.amount) 
             this.evaluateQuoteAndSwap(swapInfo);
           } catch (error) {
-            console.error("Error getting quote:", error);
+
+            console.error(`[${new Date().toISOString()}] - c=${TraderBotImpl.name} m=initiatePriceWatch error=${error}`);
+            //TODO mandar para algum lugar falando que deu erro
+
+            clearInterval(this.priceWatchIntervalId)
           }
         }
       }, this.checkInterval);
@@ -143,11 +150,9 @@ export class TraderBotImpl {
 
       const usdAmount = parseFloat(swapInfo.quoteResponse.swapUsdValue)
 
-      const amount = parseInt(swapInfo.quoteResponse.outAmount)
+      var a = this.isSolInput? this.nextTrade.lastSolTradeValue : this.nextTrade.lastTokenTradeValue;
 
-      const nextTradeThreshold = this.nextTrade.nextTradeThreshold
-
-      const difference = ( amount - nextTradeThreshold) / nextTradeThreshold;
+      const difference = ( usdAmount - a) / a;
 
       //é uma compra com solona ?
           // se a ultima compra com solana é mais barata que a atual retorna -> true ;
@@ -174,7 +179,7 @@ export class TraderBotImpl {
       
       console.log("------------------------------------------------------------------------------------")
 
-      console.log(`📈 Current price: ${amount} is ${difference > 0 ? 'higher' : 'lower'} than the next trade threshold: ${nextTradeThreshold} by ${Math.abs(difference * 100).toFixed(2)}%.`);
+      console.log(`📈 Current price: ${usdAmount} is ${difference > 0 ? 'higher' : 'lower'} than the next trade threshold: ${a} by ${Math.abs(difference * 100).toFixed(2)}%.`);
       
       if (realiseTrade) {
         try {
@@ -211,7 +216,7 @@ export class TraderBotImpl {
         }
       }
   
-      private terminateSession(reason: string): void {
+  private terminateSession(reason: string): void {
     console.warn(`❌ Terminating bot...${reason}`);
     console.log(`Current balances:\nSOL: ${this.solBalance / LAMPORTS_PER_SOL},\nUSDC: ${this.usdcBalance}`);
     if (this.priceWatchIntervalId) {
@@ -242,12 +247,10 @@ export class TraderBotImpl {
   }
   
   private async updateNextTrade(lastTrade: QuoteResponse): Promise<void> {
-    const priceChange = this.targetGainPercentage / 100;
     this.nextTrade = {
       inputMint: this.nextTrade.outputMint,
       outputMint: this.nextTrade.inputMint,
       amount: Math.floor(parseInt(lastTrade.outAmount) * 0.3), // TODO -> calcular custo
-      nextTradeThreshold: parseFloat(lastTrade.inAmount) * (1 + priceChange), //so serve para printar; remover dps ?
       lastSolTradeValue: this.isSolInput? parseFloat(lastTrade.swapUsdValue!!) : this.nextTrade.lastSolTradeValue,
       lastTokenTradeValue: this.isSolInput? this.nextTrade.lastTokenTradeValue : parseFloat(lastTrade.swapUsdValue!!),
     };

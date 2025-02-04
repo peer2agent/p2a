@@ -15,7 +15,6 @@ export class RealiseSwap {
         try {
             await Promise.all(trackingInfoInputDTO.trackedWallet.map(async (wallet) => {
                 const swapHistory = await trackingInfo.initiateServer(wallet.wallet);
-                console.log("Quantidade de swaps que serão realizados -> ", swapHistory.length);
 
                 await Promise.all(swapHistory.map(async (token) => { 
                     
@@ -25,7 +24,8 @@ export class RealiseSwap {
                     }
 
                     const outputMint = new PublicKey(token.id);
-                    const swapAmount = BigInt(Math.floor(wallet.value * token.percentage * LAMPORTS_PER_SOL));
+                    
+                    const swapAmount = Number(Math.floor(wallet.value * token.percentage * LAMPORTS_PER_SOL));
 
                     if (!swapAmount || swapAmount <= 0) {
                         console.warn(`Skipping swap due to low amount: ${swapAmount}`);
@@ -38,10 +38,12 @@ export class RealiseSwap {
                         outputMintTokenAddress: outputMint,
                         inputMintTokenAddress: new PublicKey("So11111111111111111111111111111111111111112"),
                         connection: new Connection(trackingInfoInputDTO.configTrade!!),
-                    }, keypair);
+                        ownerUserKey:keypair,
+                        isSimulation: true
+                    });
 
                     try {
-                        await trade.realiseSwap(Number(swapAmount));
+                        await trade.realiseSwap(swapAmount);
                     } catch (error) {
                         console.error(`Swap failed for ${wallet.wallet}:`, error);
                     }
