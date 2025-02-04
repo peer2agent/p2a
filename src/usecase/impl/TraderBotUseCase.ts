@@ -19,10 +19,11 @@ export class TraderBotUseCase {
     
     try{
 
-      await Promise.all(trackingInfoInputDTO.trackedWallet.map(async (wallet) => {
-        var swapHistory = await trackingInfo.initiateServer(wallet.wallet);
+        trackingInfoInputDTO.trackedWallet.map(async (wallet) => {
 
-        swapHistory.map((token)=>{
+          var swapHistory = await trackingInfo.initiateServer(wallet.wallet);
+
+          swapHistory.map((token)=>{
           
           if (!token.id || token.id.length < 32 || token.id.length > 44) {
             console.error(`Skipping swap: Invalid token ID - ${token.id}`);
@@ -44,18 +45,17 @@ export class TraderBotUseCase {
             solanaEndpoint: trackingInfoInputDTO.configTrade,
             metisEndpoint: "https://public.jupiterapi.com",
             secretKey: walletOwner.secretKey,
-            firstTradePrice:  35.4^-6 * LAMPORTS_PER_SOL,
             targetGainPercentage: 200,
             initialInputToken: SwapToken.SOL,
             initialInputAmount: swapAmount , 
             tokenMint: outputMint,
-            solMint: new PublicKey("So11111111111111111111111111111111111111112"),
+            isSimulation: true
           };
 
           new TraderBotImpl(traderBotConfig as TraderBotConfigDTO).init();      
       });
     
-    }))
+    })
 
     return "Bot Trade initiated";
     

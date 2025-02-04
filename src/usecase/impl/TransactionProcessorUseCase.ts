@@ -1,8 +1,8 @@
 import { TransactionType } from "helius-sdk";
-import { TransactionProcessorImpl } from "../impl/TransactionProcessorImpl";
-import { SwapTransactionDTO, TransferTransactionDTO } from "../dto/TransactionDTO";
+import { SwapTransactionDTO, TransferTransactionDTO } from "../../transaction-processor-service/dto/TransactionDTO";
+import { TransactionProcessorImpl } from "../../transaction-processor-service/impl/TransactionProcessorImpl";
 
-export class TransactionProcessorClient {
+export class TransactionProcessorUseCase {
     private processor: TransactionProcessorImpl;
 
     constructor(trackedWallet: string) {
