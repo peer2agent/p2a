@@ -14,6 +14,9 @@ import { LogSwapArgsDTO } from "../dto/LogSwapArgsDTO";
 import { SwapToken } from "../enum/SwapToken";
 import { JupiterClientSwap } from "../client/JupiterClientSwap";
 import { SwapInfoDTO } from "../dto/SwapInfoDTO";
+import { SnsImpl } from "../../event-producer/sns/impl/SnsImpl";
+import { SendMessageInput } from "../../input/dto/SendMessageInput";
+import { randomUUID } from "crypto";
 
 export class TraderBotImpl {
     private solanaConnection: Connection;
@@ -32,6 +35,7 @@ export class TraderBotImpl {
     private jupyterClient: JupiterClientSwap;
     private isSolInput: boolean = true;
     private firstTrade: boolean = true;
+    private snsImpl: SnsImpl;
 
     constructor(config: TraderBotConfigDTO) {
       const {
@@ -47,6 +51,7 @@ export class TraderBotImpl {
       
       this.solanaConnection = new Connection(solanaEndpoint);
       
+      this.snsImpl = new SnsImpl(randomUUID())
 
       this.jupyterClient = new JupiterClientSwap(this.solanaConnection,isSimulation)
       
@@ -236,14 +241,24 @@ export class TraderBotImpl {
     const { inputMint, inAmount, outputMint, outAmount } = quote;
     await this.updateNextTrade(quote);
     await this.refreshBalances();
-    await this.logSwap({
+
+    var log: LogSwapArgsDTO = {
       inputToken: inputMint,
       inAmount,
       outputToken: outputMint,
       outAmount,
       txId: txid,
       timestamp: new Date().toISOString(),
-    });
+    }
+    
+    await this.logSwap(log);
+    
+    var message:SendMessageInput = {
+      message: JSON.stringify(log),
+      id: txid
+    }
+
+    this.snsImpl.sendMessage(message)
   }
   
   private async updateNextTrade(lastTrade: QuoteResponse): Promise<void> {
