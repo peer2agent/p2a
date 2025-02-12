@@ -1,4 +1,4 @@
 export interface SendMessageInput {
-    message: string;
+    message: any;
     id: string;
 }

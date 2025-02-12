@@ -1,54 +1,33 @@
-import { Helius, TransactionType } from "helius-sdk";
-import * as path from "path";
-import * as fs from "fs";
-import { HistorySwapTokenDTO } from "../dto/HistorySwapTokenDTO";
+import { HistorySwapTokenDTO } from "../../dto/HistorySwapTokenDTO";
 
-export class WalletTrackerClient {
-  private readonly helius: Helius;
-  private readonly trackedWallet: string;
-  private readonly webhookURL: string;
+export class WalletFactory {
   public initialAssetDistribution: any;
   private assetsByOwnerOutput: any;
+  private assets: any;
 
-  constructor(apiKey: string, trackedWallet: string, webhookURL: string) {
-    this.helius = new Helius(apiKey);
-    this.trackedWallet = trackedWallet;
-    this.webhookURL = webhookURL;
+  constructor(assets: any) {
+    this.assets = assets;
   }
 
   async getAssetsByOwner(wallet: string): Promise<any> {
-    console.log(`\n[${this.formatTimestamp()}] Starting fetch for wallet: ${wallet}`);
+    console.log(
+      `\n[${this.formatTimestamp()}] Starting fetch for wallet: ${wallet}`
+    );
 
     try {
-      const assets = (await this.helius.rpc.getAssetsByOwner({
-        ownerAddress: wallet,
-        page: 1,
-        limit: 100,
-        displayOptions: {
-          showFungible: true,
-          showNativeBalance: true,
-          showGrandTotal: true,
-        },
-      })) as any;
-
       console.log(
         `[${this.formatTimestamp()}] Fetched assets successfully for wallet: ${wallet}`
       );
 
-      const filteredAssets = assets.items.filter(
+      const filteredAssets = this.assets.items.filter(
         (asset: any) => asset.interface !== "V1_NFT"
       );
 
       const outputData = {
         wallet: wallet,
         assets: filteredAssets,
-        nativeBalance: assets.nativeBalance,
+        nativeBalance: this.assets.nativeBalance,
       };
-
-      // console.log(
-      //     `[${this.formatTimestamp()}] Saving output data to JSON...`
-      // );
-      // this.storeOutputInJsonFile(outputData);
 
       this.assetsByOwnerOutput = outputData;
     } catch (error) {
@@ -56,46 +35,6 @@ export class WalletTrackerClient {
         `[${this.formatTimestamp()}] Error fetching assets for wallet: ${wallet}`,
         error
       );
-    }
-  }
-
-  async createWebhookIfNotExists() {
-    const apiKey = process.env.HELIUS_API_KEY!;
-    const helius = new Helius(apiKey);
-
-    // Desired webhook URL and other details
-    const desiredWebhookURL = this.webhookURL;
-    const webhookTypes: TransactionType[] = [TransactionType.ANY];
-    const webhookAccountAddresses = [this.trackedWallet];
-
-    try {
-      console.log("Fetching existing webhooks...");
-
-      // Fetch all webhooks associated with the account
-      const existingWebhooks = await helius.getAllWebhooks();
-
-      console.log("Checking if the desired webhook already exists...");
-      const webhookAlreadyExists = existingWebhooks.some(
-        (webhook: any) => webhook.webhookURL === desiredWebhookURL
-      );
-
-      if (webhookAlreadyExists) {
-        console.log("Webhook already exists. Skipping creation.");
-        return;
-      }
-
-      console.log("Webhook does not exist. Creating new webhook...");
-
-      // Create a new webhook
-      const newWebhook = await helius.createWebhook({
-        webhookURL: desiredWebhookURL,
-        transactionTypes: webhookTypes,
-        accountAddresses: webhookAccountAddresses,
-      });
-
-      console.log("Webhook created successfully:", newWebhook);
-    } catch (error) {
-      console.error("Error while creating or checking webhook:", error);
     }
   }
 
@@ -153,7 +92,7 @@ export class WalletTrackerClient {
         totalPrice: totalPrice,
         quantity: quantity,
         percentage: parseFloat(
-            percentage < 1 ? percentage.toPrecision(3) : percentage.toFixed(2)
+          percentage < 1 ? percentage.toPrecision(3) : percentage.toFixed(2)
         ),
       };
     });
@@ -181,36 +120,14 @@ export class WalletTrackerClient {
           `  - ID: ${historySwapTokenDTO.id}\n` +
           `  - Symbol: ${historySwapTokenDTO.symbol}\n` +
           `  - Quantity: ${historySwapTokenDTO.quantity.toFixed(6)}\n` +
-          `  - Total Price: ${historySwapTokenDTO.totalPrice.toFixed(2)} USDC\n` +
+          `  - Total Price: ${historySwapTokenDTO.totalPrice.toFixed(
+            2
+          )} USDC\n` +
           `  - Distribution: ${historySwapTokenDTO.percentage}%\n`
       );
     });
 
     this.initialAssetDistribution = distribution;
-  }
-
-  storeOutputInJsonFile(outputData: any): void {
-    console.log(`\n[${this.formatTimestamp()}] Storing output data to JSON...`);
-    try {
-      const outputDir = path.join(__dirname, "output");
-      const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-      const outputFile = path.join(outputDir, `${timestamp}.json`);
-
-      if (!fs.existsSync(outputDir)) {
-        fs.mkdirSync(outputDir);
-        console.log(`[${this.formatTimestamp()}] Output directory created.`);
-      }
-
-      fs.writeFileSync(outputFile, JSON.stringify(outputData, null, 2));
-      console.log(
-        `[${this.formatTimestamp()}] Output data saved to file: ${outputFile}`
-      );
-    } catch (error) {
-      console.error(
-        `[${this.formatTimestamp()}] Error saving output data to file.`,
-        error
-      );
-    }
   }
 
   private formatTimestamp(): string {

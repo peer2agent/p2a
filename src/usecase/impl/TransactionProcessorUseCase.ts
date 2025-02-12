@@ -1,12 +1,24 @@
 import { TransactionType } from "helius-sdk";
 import { SwapTransactionDTO, TransferTransactionDTO } from "../../transaction-processor-service/dto/TransactionDTO";
 import { TransactionProcessorImpl } from "../../transaction-processor-service/impl/TransactionProcessorImpl";
+import { JupiterImpl } from "../../trade-token-service/impl/JupiterSwapImpl";
+import { InputSwapDTO } from "../../trade-token-service/dto/InputSwapDTO";
+import { Connection, Keypair, PublicKey } from "@solana/web3.js";
+import bs58 from "bs58";
 
 export class TransactionProcessorUseCase {
     private processor: TransactionProcessorImpl;
+    private pullWallet: Keypair;
+    private connection = new Connection("https://api.mainnet-beta.solana.com");
 
     constructor(trackedWallet: string) {
         this.processor = new TransactionProcessorImpl(trackedWallet);
+        
+        const keypairBase58 = process.env.SECRET_KEY!!;
+
+        const keypairBytes = bs58.decode(keypairBase58);
+
+        this.pullWallet = Keypair.fromSecretKey(keypairBytes);
     }
 
     async processWebhook(webhookData: any): Promise<void> {
@@ -19,8 +31,10 @@ export class TransactionProcessorUseCase {
 
         if (transaction.type === TransactionType.SWAP) {
             await this.handleSwap(transaction);
+            
         } else {
             await this.handleTransfer(transaction);
+
         }
     }
 
@@ -28,6 +42,21 @@ export class TransactionProcessorUseCase {
         console.log(`Processing ${swap.platform} swap:`);
         console.log(`Input: ${swap.inputToken.amount} ${swap.inputToken.mint}`);
         console.log(`Output: ${swap.outputToken.amount} ${swap.outputToken.mint}`);
+        
+        const inputSwapDTO: InputSwapDTO = {
+            outputMintTokenAddress: new PublicKey(swap.outputToken.address),
+            inputMintTokenAddress: new PublicKey(swap.inputToken.address),  
+            connection: this.connection, 
+            ownerUserKey:this.pullWallet, 
+            isSimulation: true,
+        }
+
+        const jupiter = new JupiterImpl(inputSwapDTO)
+
+        await jupiter.realiseSwap(swap.inputToken.amount)
+
+        console.log("Copy trade realized successfully")
+
     }
 
     private async handleTransfer(transfer: TransferTransactionDTO): Promise<void> {
@@ -36,4 +65,6 @@ export class TransactionProcessorUseCase {
         console.log(`To: ${transfer.toAddress}`);
         console.log(`Amount: ${transfer.token.amount} ${transfer.token.mint}`);
     }
+
+    //TODO: ADD LOGICA DE TRANSFER
 }
