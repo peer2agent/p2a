@@ -14,6 +14,9 @@ import { LogSwapArgsDTO } from "../dto/LogSwapArgsDTO";
 import { SwapToken } from "../enum/SwapToken";
 import { JupiterClientSwap } from "../client/JupiterClientSwap";
 import { SwapInfoDTO } from "../dto/SwapInfoDTO";
+import { SnsImpl } from "../../event-producer/sns/impl/SnsImpl";
+import { SendMessageInput } from "../../input/dto/SendMessageInputDTO";
+import { randomUUID } from "crypto";
 
 export class TraderBotImpl {
     private solanaConnection: Connection;
@@ -32,6 +35,7 @@ export class TraderBotImpl {
     private jupyterClient: JupiterClientSwap;
     private isSolInput: boolean = true;
     private firstTrade: boolean = true;
+    private snsImpl: SnsImpl;
 
     constructor(config: TraderBotConfigDTO) {
       const {
@@ -41,15 +45,21 @@ export class TraderBotImpl {
         checkInterval,
         initialInputToken,
         initialInputAmount,
-        firstTradePrice,
         tokenMint,
-        solMint,
+        isSimulation
       } = config;
-
+      //migrar para a connection
       this.solanaConnection = new Connection(solanaEndpoint);
-      this.wallet = Keypair.fromSecretKey(secretKey);
+      
+      this.snsImpl = new SnsImpl(randomUUID())
+      //migrar para a connection
+      this.jupyterClient = new JupiterClientSwap(this.solanaConnection,isSimulation)
+      
+      this.solMint = new PublicKey("So11111111111111111111111111111111111111112");
+      
       this.tokenMint = tokenMint!!;
-      this.solMint = solMint!!;
+
+      this.wallet = Keypair.fromSecretKey(secretKey);
       
       this.usdcTokenAccount = getAssociatedTokenAddressSync(this.tokenMint,this.wallet.publicKey);
       
@@ -61,7 +71,6 @@ export class TraderBotImpl {
         this.checkInterval = checkInterval;
       }
       
-      this.jupyterClient = new JupiterClientSwap(this.solanaConnection)
        
       this.isSolInput = initialInputToken === SwapToken.SOL,
 
@@ -69,7 +78,6 @@ export class TraderBotImpl {
         inputMint:initialInputToken === SwapToken.SOL ? this.solMint.toBase58() : this.tokenMint.toBase58(),
         outputMint:initialInputToken === SwapToken.SOL ? this.tokenMint.toBase58() : this.solMint.toBase58(),
         amount: Math.floor(initialInputAmount ), //entrada para o swap 
-        nextTradeThreshold: Math.floor(firstTradePrice), //2x da meu input
         lastTokenTradeValue: 0,
         lastSolTradeValue: 0
       };
@@ -88,6 +96,7 @@ export class TraderBotImpl {
 
     private async refreshBalances(): Promise<void> {
       try {
+        //migrar para a connection
         const results = await Promise.allSettled([
           this.solanaConnection.getBalance(this.wallet.publicKey),
           this.solanaConnection.getTokenAccountBalance(this.usdcTokenAccount),
@@ -132,7 +141,11 @@ export class TraderBotImpl {
             const swapInfo = await this.jupyterClient.fetchSwapInfo(this.nextTrade.inputMint,this.nextTrade.outputMint,this.nextTrade.amount) 
             this.evaluateQuoteAndSwap(swapInfo);
           } catch (error) {
-            console.error("Error getting quote:", error);
+
+            console.error(`[${new Date().toISOString()}] - c=${TraderBotImpl.name} m=initiatePriceWatch error=${error}`);
+            //TODO mandar para algum lugar falando que deu erro
+
+            clearInterval(this.priceWatchIntervalId)
           }
         }
       }, this.checkInterval);
@@ -143,11 +156,9 @@ export class TraderBotImpl {
 
       const usdAmount = parseFloat(swapInfo.quoteResponse.swapUsdValue)
 
-      const amount = parseInt(swapInfo.quoteResponse.outAmount)
+      var a = this.isSolInput? this.nextTrade.lastSolTradeValue : this.nextTrade.lastTokenTradeValue;
 
-      const nextTradeThreshold = this.nextTrade.nextTradeThreshold
-
-      const difference = ( amount - nextTradeThreshold) / nextTradeThreshold;
+      const difference = ( usdAmount - a) / a;
 
       //é uma compra com solona ?
           // se a ultima compra com solana é mais barata que a atual retorna -> true ;
@@ -174,9 +185,9 @@ export class TraderBotImpl {
       
       console.log("------------------------------------------------------------------------------------")
 
-      console.log(`📈 Current price: ${amount} is ${difference > 0 ? 'higher' : 'lower'} than the next trade threshold: ${nextTradeThreshold} by ${Math.abs(difference * 100).toFixed(2)}%.`);
+      console.log(`📈 Current price: ${usdAmount} is ${difference > 0 ? 'higher' : 'lower'} than the next trade threshold: ${a} by ${Math.abs(difference * 100).toFixed(2)}%.`);
       
-      if (realiseTrade) {
+      if (true) {
         try {
           this.waitingForConfirmation = true;
           await this.executeSwap(swapInfo,swapInfo.quoteResponse);
@@ -211,7 +222,7 @@ export class TraderBotImpl {
         }
       }
   
-      private terminateSession(reason: string): void {
+  private terminateSession(reason: string): void {
     console.warn(`❌ Terminating bot...${reason}`);
     console.log(`Current balances:\nSOL: ${this.solBalance / LAMPORTS_PER_SOL},\nUSDC: ${this.usdcBalance}`);
     if (this.priceWatchIntervalId) {
@@ -231,23 +242,33 @@ export class TraderBotImpl {
     const { inputMint, inAmount, outputMint, outAmount } = quote;
     await this.updateNextTrade(quote);
     await this.refreshBalances();
-    await this.logSwap({
+
+    var log: LogSwapArgsDTO = {
       inputToken: inputMint,
       inAmount,
       outputToken: outputMint,
       outAmount,
+      outAmountUsd: quote.swapUsdValue!!,
       txId: txid,
       timestamp: new Date().toISOString(),
-    });
+      isBuyToken: this.isSolInput ? "true" : "false",
+    }
+    
+    await this.logSwap(log);
+    
+    var message:SendMessageInput = {
+      message: JSON.stringify(log),
+      id: txid
+    }
+
+    this.snsImpl.sendMessage(message)
   }
   
   private async updateNextTrade(lastTrade: QuoteResponse): Promise<void> {
-    const priceChange = this.targetGainPercentage / 100;
     this.nextTrade = {
       inputMint: this.nextTrade.outputMint,
       outputMint: this.nextTrade.inputMint,
-      amount: Math.floor(parseInt(lastTrade.outAmount) * 0.3), // TODO -> calcular custo
-      nextTradeThreshold: parseFloat(lastTrade.inAmount) * (1 + priceChange), //so serve para printar; remover dps ?
+      amount: Math.floor(parseInt(lastTrade.outAmount)), // TODO -> calcular custo
       lastSolTradeValue: this.isSolInput? parseFloat(lastTrade.swapUsdValue!!) : this.nextTrade.lastSolTradeValue,
       lastTokenTradeValue: this.isSolInput? this.nextTrade.lastTokenTradeValue : parseFloat(lastTrade.swapUsdValue!!),
     };
@@ -255,15 +276,18 @@ export class TraderBotImpl {
   }
   
   private async logSwap(args: LogSwapArgsDTO): Promise<void> {
-    const { inputToken, inAmount, outputToken, outAmount, txId, timestamp } =
+    const { inputToken, inAmount, outputToken, outAmount, txId, timestamp, isBuyToken,outAmountUsd } =
       args;
     const logEntry = {
       inputToken,
       inAmount,
       outputToken,
-      outAmount,
+      outAmount,//QUANTIDADE DE TOKENS
+      outAmountUsd,
       txId,
       timestamp,
+      isBuyToken
+      
     };
   
     const filePath = path.join(__dirname, "trades.json");
