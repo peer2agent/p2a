@@ -5,12 +5,11 @@ export interface TraderBotConfigDTO {
     solanaEndpoint: string; // e.g., "https://ex-am-ple.solana-mainnet.quiknode.pro/123456/"
     metisEndpoint: string;  // e.g., "https://jupiter-swap-api.quiknode.pro/123456/"
     secretKey: Uint8Array;
-    firstTradePrice: number;
     targetGainPercentage?: number;
     checkInterval?: number;
     initialInputToken: SwapToken;
     initialInputAmount: number;
-    tokenMint: PublicKey ;
-    solMint: PublicKey ;
+    tokenMint: PublicKey;
+    isSimulation: boolean;
 }
 
