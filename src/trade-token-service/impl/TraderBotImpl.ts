@@ -15,7 +15,7 @@ import { SwapToken } from "../enum/SwapToken";
 import { JupiterClientSwap } from "../client/JupiterClientSwap";
 import { SwapInfoDTO } from "../dto/SwapInfoDTO";
 import { SnsImpl } from "../../event-producer/sns/impl/SnsImpl";
-import { SendMessageInput } from "../../input/dto/SendMessageInput";
+import { SendMessageInput } from "../../input/dto/SendMessageInputDTO";
 import { randomUUID } from "crypto";
 
 export class TraderBotImpl {
@@ -48,11 +48,11 @@ export class TraderBotImpl {
         tokenMint,
         isSimulation
       } = config;
-      
+      //migrar para a connection
       this.solanaConnection = new Connection(solanaEndpoint);
       
       this.snsImpl = new SnsImpl(randomUUID())
-
+      //migrar para a connection
       this.jupyterClient = new JupiterClientSwap(this.solanaConnection,isSimulation)
       
       this.solMint = new PublicKey("So11111111111111111111111111111111111111112");
@@ -96,6 +96,7 @@ export class TraderBotImpl {
 
     private async refreshBalances(): Promise<void> {
       try {
+        //migrar para a connection
         const results = await Promise.allSettled([
           this.solanaConnection.getBalance(this.wallet.publicKey),
           this.solanaConnection.getTokenAccountBalance(this.usdcTokenAccount),
@@ -186,7 +187,7 @@ export class TraderBotImpl {
 
       console.log(`📈 Current price: ${usdAmount} is ${difference > 0 ? 'higher' : 'lower'} than the next trade threshold: ${a} by ${Math.abs(difference * 100).toFixed(2)}%.`);
       
-      if (realiseTrade) {
+      if (true) {
         try {
           this.waitingForConfirmation = true;
           await this.executeSwap(swapInfo,swapInfo.quoteResponse);
@@ -247,8 +248,10 @@ export class TraderBotImpl {
       inAmount,
       outputToken: outputMint,
       outAmount,
+      outAmountUsd: quote.swapUsdValue!!,
       txId: txid,
       timestamp: new Date().toISOString(),
+      isBuyToken: this.isSolInput ? "true" : "false",
     }
     
     await this.logSwap(log);
@@ -265,7 +268,7 @@ export class TraderBotImpl {
     this.nextTrade = {
       inputMint: this.nextTrade.outputMint,
       outputMint: this.nextTrade.inputMint,
-      amount: Math.floor(parseInt(lastTrade.outAmount) * 0.3), // TODO -> calcular custo
+      amount: Math.floor(parseInt(lastTrade.outAmount)), // TODO -> calcular custo
       lastSolTradeValue: this.isSolInput? parseFloat(lastTrade.swapUsdValue!!) : this.nextTrade.lastSolTradeValue,
       lastTokenTradeValue: this.isSolInput? this.nextTrade.lastTokenTradeValue : parseFloat(lastTrade.swapUsdValue!!),
     };
@@ -273,15 +276,18 @@ export class TraderBotImpl {
   }
   
   private async logSwap(args: LogSwapArgsDTO): Promise<void> {
-    const { inputToken, inAmount, outputToken, outAmount, txId, timestamp } =
+    const { inputToken, inAmount, outputToken, outAmount, txId, timestamp, isBuyToken,outAmountUsd } =
       args;
     const logEntry = {
       inputToken,
       inAmount,
       outputToken,
-      outAmount,
+      outAmount,//QUANTIDADE DE TOKENS
+      outAmountUsd,
       txId,
       timestamp,
+      isBuyToken
+      
     };
   
     const filePath = path.join(__dirname, "trades.json");

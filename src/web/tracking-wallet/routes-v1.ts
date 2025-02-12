@@ -16,9 +16,9 @@ app.use(express.json());
 // Configurar CORS para permitir a origem do frontend
 app.use(
   cors({
-    origin: "http://localhost:5173", // Origem do frontend
-    methods: ["GET", "POST"],       // Métodos permitidos
-    allowedHeaders: ["Content-Type"], // Cabeçalhos permitidos
+    origin: "*", // Origem do frontend
+    methods: ["*"],       // Métodos permitidos
+    allowedHeaders: ["*"], // Cabeçalhos permitidos
   })
 );
 
@@ -53,7 +53,7 @@ app.post("/realise-trade", async (req, res) => {
   res.send("ok");
 })
 
-app.post("/webhook", async (req, res) => {
+app.post("/p2a", (req, res) => {
   console.log("------------------New transaction-----------------")
   try {
     const processor = new TransactionProcessorUseCase(process.env.WALLET_ADDRESS!);
@@ -83,6 +83,7 @@ app.post("/webhook", async (req, res) => {
     });
   }
 });
+
 
 function formatTimestamp(): string {
   return new Date().toISOString();
