@@ -25,7 +25,7 @@ export class RealiseSwap {
 
                     const outputMint = new PublicKey(token.id);
                     
-                    const swapAmount = Number(Math.floor(wallet.value * token.percentage * LAMPORTS_PER_SOL));
+                    const swapAmount = Number(Math.floor(wallet.value * (token.percentage/100) * LAMPORTS_PER_SOL));
 
                     if (!swapAmount || swapAmount <= 0) {
                         console.warn(`Skipping swap due to low amount: ${swapAmount}`);
