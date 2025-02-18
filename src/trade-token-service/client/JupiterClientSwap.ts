@@ -6,7 +6,7 @@ import { randomUUID } from 'crypto';
 
 export class JupiterClientSwap {
     private connection: Connection
-    private isSimulationTransaction: boolean = false;
+    private isSimulationTransaction: boolean;
 
     constructor(connection: Connection, isSimulation:boolean) {
         this.connection = connection;
