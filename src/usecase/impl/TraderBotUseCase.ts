@@ -49,7 +49,7 @@ export class TraderBotUseCase {
             initialInputToken: SwapToken.SOL,
             initialInputAmount: swapAmount , 
             tokenMint: outputMint,
-            isSimulation: true
+            isSimulation: trackingInfoInputDTO.isSimulation,
           };
 
           new TraderBotImpl(traderBotConfig as TraderBotConfigDTO).init();      
