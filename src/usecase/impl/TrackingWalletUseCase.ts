@@ -11,10 +11,10 @@ export class TrackingWalletUseCase implements TrackingService {
         
         var trackingTokens:HistorySwapTokenDTO[]  =[]
 
-        Promise.all(trackingInfoInputDTO.trackedWallet.map(async (wallet) => {
+        await Promise.all(trackingInfoInputDTO.trackedWallet.map(async (wallet) => {
              trackingTokens.push(...await trackingInfo.initiateServer(wallet.wallet))
         }))
-
+        
         return trackingTokens
     }
 
