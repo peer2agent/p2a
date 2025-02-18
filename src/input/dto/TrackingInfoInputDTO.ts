@@ -7,7 +7,7 @@ export interface TrackingInfoInputDTO {
     trackedWallet: ListTrackerDTO[];
     webhookURL: string;
     configTrade?: string;
-    amount?: number;
+    isSimulation: boolean;
 }
 
 export interface ListTrackerDTO {

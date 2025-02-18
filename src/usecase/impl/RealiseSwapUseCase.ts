@@ -39,7 +39,7 @@ export class RealiseSwap {
                         inputMintTokenAddress: new PublicKey("So11111111111111111111111111111111111111112"),
                         connection: new Connection(trackingInfoInputDTO.configTrade!!),
                         ownerUserKey:keypair,
-                        isSimulation: true
+                        isSimulation: trackingInfoInputDTO.isSimulation
                     });
 
                     try {
