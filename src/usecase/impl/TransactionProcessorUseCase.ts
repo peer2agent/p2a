@@ -3,7 +3,7 @@ import { SwapTransactionDTO, TransferTransactionDTO } from "../../transaction-pr
 import { TransactionProcessorImpl } from "../../transaction-processor-service/impl/TransactionProcessorImpl";
 import { JupiterImpl } from "../../trade-token-service/impl/JupiterSwapImpl";
 import { InputSwapDTO } from "../../trade-token-service/dto/InputSwapDTO";
-import { Connection, Keypair, PublicKey } from "@solana/web3.js";
+import { Connection, Keypair, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import bs58 from "bs58";
 
 export class TransactionProcessorUseCase {
@@ -44,16 +44,18 @@ export class TransactionProcessorUseCase {
         console.log(`Output: ${swap.outputToken.amount} ${swap.outputToken.mint}`);
         
         const inputSwapDTO: InputSwapDTO = {
-            outputMintTokenAddress: new PublicKey(swap.outputToken.address),
-            inputMintTokenAddress: new PublicKey(swap.inputToken.address),  
+            outputMintTokenAddress: new PublicKey(swap.outputToken.mint),
+            inputMintTokenAddress: new PublicKey(swap.inputToken.mint),  
             connection: this.connection, 
             ownerUserKey:this.pullWallet, 
-            isSimulation: true,
+            isSimulation: false,
         }
 
         const jupiter = new JupiterImpl(inputSwapDTO)
 
-        await jupiter.realiseSwap(swap.inputToken.amount)
+        var amount = swap.inputToken.amount * LAMPORTS_PER_SOL
+
+        await jupiter.realiseSwap(Math.floor(amount))
 
         console.log("Copy trade realized successfully")
 
