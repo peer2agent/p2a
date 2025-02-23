@@ -31,12 +31,12 @@ app.post("/tracking", async (req, res) => {
   var distribution = await tracker.usecase(message);
 
   res.send(distribution);
+
 });
 
 app.post("/start-bot", (req, res) => {
 
   var bot = new TraderBotUseCase();
-
 
   bot.usecase(req.body);
 
