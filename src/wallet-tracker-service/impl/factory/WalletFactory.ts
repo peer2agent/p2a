@@ -127,7 +127,7 @@ export class WalletFactory {
       );
     });
 
-    this.initialAssetDistribution = distribution.filter((obj:HistorySwapTokenDTO)=>{return obj.id !== "SOL"});
+    this.initialAssetDistribution = distribution;
   }
 
   private formatTimestamp(): string {
