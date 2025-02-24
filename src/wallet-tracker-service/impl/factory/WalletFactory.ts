@@ -59,11 +59,15 @@ export class WalletFactory {
 
     const nativeBalancePrice = outputData.nativeBalance?.total_price || 0;
 
+    console.log(nativeBalanceAmount)
+
     const totalValue = assets.reduce(
       (sum: number, asset: any) =>
         sum + (asset.token_info?.price_info?.total_price || 0),
       nativeBalancePrice
     );
+
+    this.totalAmountUsd = totalValue;
 
     if (totalValue === 0) {
       console.error(
