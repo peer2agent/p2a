@@ -1,6 +1,7 @@
 import { HeliusClient } from "../client/HeliusClient";
 import { WalletFactory } from "./factory/WalletFactory";
 import { HistorySwapTokenDTO } from "../dto/HistorySwapTokenDTO";
+import { WalletDTO } from "../dto/WalletDTO";
 
 export class WalletTrackerImpl {
   public webhookURL: string;
@@ -11,7 +12,7 @@ export class WalletTrackerImpl {
     this.apiKey = apiKey;
   }
 
-  async initiateServer(wallet: string): Promise<HistorySwapTokenDTO[]> {
+  async initiateServer(wallet: string): Promise<WalletDTO> {
     const obfuscatedApiKey = `${this.apiKey.slice(0, 3)}***${this.apiKey.slice(
       -3
     )}`;
@@ -50,7 +51,12 @@ export class WalletTrackerImpl {
         `[${new Date().toISOString()}] Process completed successfully.\n`
       );
 
-      return tracker.initialAssetDistribution;
+      let walletDTO: WalletDTO = {
+        usdBallance: tracker.totalAmountUsd,
+        tokens: tracker.initialAssetDistribution,
+      }
+
+      return walletDTO;
     } catch (error) {
       console.error(
         `[${new Date().toISOString()}] Error during WalletTracker execution.`,
