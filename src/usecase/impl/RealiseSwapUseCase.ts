@@ -14,8 +14,10 @@ export class RealiseSwap {
 
         try {
             await Promise.all(trackingInfoInputDTO.trackedWallet.map(async (wallet) => {
-                const swapHistory = await trackingInfo.initiateServer(wallet.wallet);
-
+                const walletDTO = await trackingInfo.initiateServer(wallet.wallet);
+                
+                const swapHistory = walletDTO.tokens
+    
                 await Promise.all(swapHistory.map(async (token) => { 
                     
                     if (!token.id || token.id.length < 32 || token.id.length > 44) {
