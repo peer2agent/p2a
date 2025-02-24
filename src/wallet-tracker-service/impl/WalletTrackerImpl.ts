@@ -53,7 +53,7 @@ export class WalletTrackerImpl {
 
       let walletDTO: WalletDTO = {
         usdBallance: tracker.totalAmountUsd,
-        tokens: tracker.initialAssetDistribution,
+        filteredTokens: tracker.initialAssetDistribution,
       }
 
       return walletDTO;

@@ -16,7 +16,7 @@ export class RealiseSwap {
             await Promise.all(trackingInfoInputDTO.trackedWallet.map(async (wallet) => {
                 const walletDTO = await trackingInfo.initiateServer(wallet.wallet);
                 
-                const swapHistory = walletDTO.tokens
+                const swapHistory = walletDTO.filteredTokens
     
                 await Promise.all(swapHistory.map(async (token) => { 
                     

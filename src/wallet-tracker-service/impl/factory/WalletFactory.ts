@@ -10,7 +10,7 @@ export class WalletFactory {
     this.assets = assets;
   }
 
-  async getAssetsByOwner(wallet: string): Promise<any> {
+  async getAssetsByOwner(wallet: string) {
     console.log(
       `\n[${this.formatTimestamp()}] Starting fetch for wallet: ${wallet}`
     );
@@ -58,8 +58,6 @@ export class WalletFactory {
     );
 
     const nativeBalancePrice = outputData.nativeBalance?.total_price || 0;
-
-    console.log(nativeBalanceAmount)
 
     const totalValue = assets.reduce(
       (sum: number, asset: any) =>

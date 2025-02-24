@@ -23,7 +23,7 @@ export class TraderBotUseCase {
 
           var walletDTO = await trackingInfo.initiateServer(wallet.wallet);
 
-          var swapHistory = walletDTO.tokens
+          var swapHistory = walletDTO.filteredTokens
 
           swapHistory.map((token)=>{
           
