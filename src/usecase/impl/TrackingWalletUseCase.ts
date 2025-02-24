@@ -3,6 +3,7 @@ import { HistorySwapTokenDTO } from "../../wallet-tracker-service/dto/HistorySwa
 import { WalletTrackerImpl } from "../../wallet-tracker-service/impl/WalletTrackerImpl";
 import { TrackingService } from "../../output/service/TrackingService";
 import { LAMPORTS_PER_SOL } from "@solana/web3.js";
+import { WalletDTO } from "../../wallet-tracker-service/dto/WalletDTO";
 
 export class TrackingWalletUseCase implements TrackingService {
     
@@ -10,24 +11,10 @@ export class TrackingWalletUseCase implements TrackingService {
         
         const trackingInfo = new WalletTrackerImpl(trackingInfoInputDTO.apiKey,trackingInfoInputDTO.webhookURL);
         
-        var trackingTokens:any[] = []
+        var trackingTokens:WalletDTO[] = []
 
         await Promise.all(trackingInfoInputDTO.trackedWallet.map(async (wallet) => {
-            var walletDTO = await trackingInfo.initiateServer(wallet.wallet)
-            var tracking = walletDTO.tokens
-            
-            tracking.map((tracking) => {
-                const x = {
-                    id: tracking.id,
-                    symbol: tracking.symbol,
-                    userTotalPrice: tracking.totalPrice,
-                    userQuantity: tracking.quantity,
-                    userPercentage: tracking.percentage,
-                    myAporte: wallet.value * (tracking.percentage/100)
-                };
-                trackingTokens.push(x);
-            });
-            
+            trackingTokens.push(await trackingInfo.initiateServer(wallet.wallet))
         }))
         
         return trackingTokens
