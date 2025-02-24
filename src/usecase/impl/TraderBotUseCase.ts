@@ -21,7 +21,9 @@ export class TraderBotUseCase {
 
         trackingInfoInputDTO.trackedWallet.map(async (wallet) => {
 
-          var swapHistory = await trackingInfo.initiateServer(wallet.wallet);
+          var walletDTO = await trackingInfo.initiateServer(wallet.wallet);
+
+          var swapHistory = walletDTO.tokens
 
           swapHistory.map((token)=>{
           
