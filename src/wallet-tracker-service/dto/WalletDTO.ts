@@ -1,6 +1,6 @@
 import { HistorySwapTokenDTO } from "./HistorySwapTokenDTO";
 
 export interface WalletDTO {
-  tokens : HistorySwapTokenDTO[],
+  filteredTokens : HistorySwapTokenDTO[],
   usdBallance: number
 }
