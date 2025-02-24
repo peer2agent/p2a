@@ -127,7 +127,7 @@ export class WalletFactory {
       );
     });
 
-    this.initialAssetDistribution = distribution;
+    this.initialAssetDistribution = distribution.filter((obj:HistorySwapTokenDTO)=>{return obj.percentage >= 0.01 });
   }
 
   private formatTimestamp(): string {
