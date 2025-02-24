@@ -2,6 +2,7 @@ import { HistorySwapTokenDTO } from "../../dto/HistorySwapTokenDTO";
 
 export class WalletFactory {
   public initialAssetDistribution: any;
+  public totalAmountUsd: number = 0;
   private assetsByOwnerOutput: any;
   private assets: any;
 
@@ -85,6 +86,8 @@ export class WalletFactory {
       const quantity = balance / Math.pow(10, decimals);
 
       const percentage = (totalPrice / totalValue) * 100;
+
+      this.totalAmountUsd += totalPrice;
 
       return {
         id: asset.id,
