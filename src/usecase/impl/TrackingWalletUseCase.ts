@@ -14,12 +14,7 @@ export class TrackingWalletUseCase implements TrackingService {
         var trackingTokens:WalletDTO[] = []
 
         await Promise.all(trackingInfoInputDTO.trackedWallet.map(async (wallet) => {
-            var walletDTO = await trackingInfo.initiateServer(wallet.wallet)
-            
-            trackingTokens.push(walletDTO)
-            
-            ;
-                        
+            trackingTokens.push(await trackingInfo.initiateServer(wallet.wallet))
         }))
         
         return trackingTokens
