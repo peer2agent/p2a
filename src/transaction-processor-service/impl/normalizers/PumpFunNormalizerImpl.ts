@@ -68,6 +68,7 @@ export class PumpFunNormalizerImpl extends BaseNormalizerImpl {
         if (isUserSelling) {
             // Vendendo MEME por SOL
             return {
+                trackedWallet: this.trackedWallet,
                 type: TransactionType.SWAP,
                 platform: SwapPlatform.PUMP_FUN,
                 signature: data.signature,
@@ -89,6 +90,7 @@ export class PumpFunNormalizerImpl extends BaseNormalizerImpl {
         
         // Comprando MEME com SOL
         return {
+            trackedWallet: this.trackedWallet,
             type: TransactionType.SWAP,
             platform: SwapPlatform.PUMP_FUN,
             signature: data.signature,
