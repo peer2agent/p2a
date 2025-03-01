@@ -113,6 +113,7 @@ export class TransactionProcessorImpl {
         }
 
         return {
+            trackedWallet: this.trackedWallet, 
             type: TransactionType.SWAP,
             platform,
             signature: data.signature,
@@ -141,6 +142,7 @@ export class TransactionProcessorImpl {
         const transfer = data.tokenTransfers[0];
 
         return {
+            trackedWallet: this.trackedWallet,
             type: TransactionType.TRANSFER,
             signature: data.signature,
             timestamp: data.timestamp || Date.now(),

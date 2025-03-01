@@ -63,6 +63,7 @@ export class RaydiumNormalizerImpl extends BaseNormalizerImpl {
         }
 
         return {
+            trackedWallet: this.trackedWallet,
             type: TransactionType.SWAP,
             platform: SwapPlatform.RAYDIUM,
             signature: data.signature,
