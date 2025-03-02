@@ -9,6 +9,7 @@ export interface TokenDataDTO {
 }
 
 export interface BaseTransactionDTO {
+    trackedWallet: string;
     signature: string;
     timestamp: number;
     status: "SUCCESS" | "FAILED";

@@ -59,6 +59,7 @@ export class TransferNormalizerImpl extends BaseNormalizerImpl {
         console.log("Amount:", transfer.amount / 1e9, "SOL");
 
         return {
+            trackedWallet: this.trackedWallet,
             type: TransactionType.TRANSFER,
             signature: data.signature,
             timestamp: data.timestamp || Date.now(),
@@ -90,6 +91,7 @@ export class TransferNormalizerImpl extends BaseNormalizerImpl {
         console.log("Amount:", transfer.tokenAmount);
 
         return {
+            trackedWallet: this.trackedWallet,
             type: TransactionType.TRANSFER,
             signature: data.signature,
             timestamp: data.timestamp || Date.now(),

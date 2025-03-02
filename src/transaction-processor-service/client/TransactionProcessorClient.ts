@@ -25,13 +25,13 @@ export class TransactionProcessorClient {
     }
 
     private async handleSwap(swap: SwapTransactionDTO): Promise<void> {
-        console.log(`Processing ${swap.platform} swap:`);
+        console.log(`Processing ${swap.platform} swap for wallet: ${swap.trackedWallet}`);
         console.log(`Input: ${swap.inputToken.amount} ${swap.inputToken.mint}`);
         console.log(`Output: ${swap.outputToken.amount} ${swap.outputToken.mint}`);
     }
 
     private async handleTransfer(transfer: TransferTransactionDTO): Promise<void> {
-        console.log(`Processing transfer:`);
+        console.log(`Processing transfer for wallet: ${transfer.trackedWallet}`);
         console.log(`From: ${transfer.fromAddress}`);
         console.log(`To: ${transfer.toAddress}`);
         console.log(`Amount: ${transfer.token.amount} ${transfer.token.mint}`);
