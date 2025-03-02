@@ -89,6 +89,7 @@ export class JupiterNormalizerImpl extends BaseNormalizerImpl {
         }
 
         return {
+            trackedWallet: this.trackedWallet,
             type: TransactionType.SWAP,
             platform: SwapPlatform.JUPITER,
             signature: data.signature,

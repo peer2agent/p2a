@@ -91,6 +91,7 @@ export class OrcaNormalizerImpl extends BaseNormalizerImpl {
         console.log("💧 Orca swap detected!");
 
         return {
+            trackedWallet: this.trackedWallet,
             type: TransactionType.SWAP,
             platform: SwapPlatform.ORCA,
             signature: data.signature,

@@ -61,6 +61,7 @@ export class MeteoraImpl extends BaseNormalizerImpl {
         }
 
         return {
+            trackedWallet: this.trackedWallet,
             type: TransactionType.SWAP,
             platform: SwapPlatform.METEORA,
             signature: data.signature,
