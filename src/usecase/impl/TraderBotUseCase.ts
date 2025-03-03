@@ -11,18 +11,24 @@ export class TraderBotUseCase {
     trackingInfoInputDTO: TrackingInfoInputDTO
   ): Promise<any> {
     
-    const trackingInfo = new WalletTrackerImpl(trackingInfoInputDTO.apiKey, trackingInfoInputDTO.webhookURL);
     
     const keypairBase58 = process.env.SECRET_KEY!!;
-    const keypairBytes = bs58.decode(keypairBase58);
-    const walletOwner = Keypair.fromSecretKey(keypairBytes);
     
-    try{
+    const keypairBytes = bs58.decode(keypairBase58);
+    
+    const walletOwner = Keypair.fromSecretKey(keypairBytes);
 
-        trackingInfoInputDTO.trackedWallet.map(async (wallet) => {
+    var wallets = trackingInfoInputDTO.trackedWallet.map(wallets => wallets.wallet)
+  
+    const trackingInfo = new WalletTrackerImpl();
 
-          var walletDTO = await trackingInfo.initiateServer(wallet.wallet);
-
+    await trackingInfo.createWebhook(wallets);
+       
+    try {
+      trackingInfoInputDTO.trackedWallet.map(async (wallet) => {
+        
+          var walletDTO = await trackingInfo.getDistribution(wallet.wallet);
+          
           var swapHistory = walletDTO.filteredTokens
 
           swapHistory.map((token)=>{

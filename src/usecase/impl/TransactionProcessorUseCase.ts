@@ -5,6 +5,7 @@ import { JupiterImpl } from "../../trade-token-service/impl/JupiterSwapImpl";
 import { InputSwapDTO } from "../../trade-token-service/dto/InputSwapDTO";
 import { Connection, Keypair, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import bs58 from "bs58";
+import { WalletTrackerImpl } from "../../wallet-tracker-service/impl/WalletTrackerImpl";
 
 export class TransactionProcessorUseCase {
     private processor: TransactionProcessorImpl;
@@ -52,6 +53,12 @@ export class TransactionProcessorUseCase {
         }
 
         const jupiter = new JupiterImpl(inputSwapDTO)
+
+        const trackedWallet = new WalletTrackerImpl()
+
+        trackedWallet.createWebhook([])
+
+        trackedWallet.getDistribution("")
 
         var amount = swap.inputToken.amount * LAMPORTS_PER_SOL
 
