@@ -65,46 +65,48 @@ export class PumpFunNormalizerImpl extends BaseNormalizerImpl {
     // Log para debug
     console.log("🎮 PumpFun transaction detected!");
 
-    if (isUserSelling) {
-      // Vendendo MEME por SOL
-      return {
-        type: TransactionType.SWAP,
-        platform: SwapPlatform.PUMP_FUN,
-        signature: data.signature,
-        timestamp: data.timestamp,
-        status: data.transactionError ? "FAILED" : "SUCCESS",
-        inputToken: {
-          mint: tokenTransfer.mint,
-          amount: tokenTransfer.tokenAmount,
-          address: tokenTransfer.fromUserAccount,
-        },
-        outputToken: {
-          mint: "So11111111111111111111111111111111111111112", // SOL mint address
-          amount: solAmount,
-          address: this.trackedWallet,
-        },
-        fee: data.fee,
-      };
+        if (isUserSelling) {
+            // Vendendo MEME por SOL
+            return {
+                trackedWallet: this.trackedWallet,
+                type: TransactionType.SWAP,
+                platform: SwapPlatform.PUMP_FUN,
+                signature: data.signature,
+                timestamp: data.timestamp,
+                status: data.transactionError ? "FAILED" : "SUCCESS",
+                inputToken: {
+                    mint: tokenTransfer.mint,
+                    amount: tokenTransfer.tokenAmount,
+                    address: tokenTransfer.fromUserAccount
+                },
+                outputToken: {
+                    mint: "So11111111111111111111111111111111111111112", // SOL mint address
+                    amount: solAmount,
+                    address: this.trackedWallet
+                },
+                fee: data.fee
+            };
+        }
+        
+        // Comprando MEME com SOL
+        return {
+            trackedWallet: this.trackedWallet,
+            type: TransactionType.SWAP,
+            platform: SwapPlatform.PUMP_FUN,
+            signature: data.signature,
+            timestamp: data.timestamp,
+            status: data.transactionError ? "FAILED" : "SUCCESS",
+            inputToken: {
+                mint: "So11111111111111111111111111111111111111112",
+                amount: solAmount,
+                address: this.trackedWallet
+            },
+            outputToken: {
+                mint: tokenTransfer.mint,
+                amount: tokenTransfer.tokenAmount,
+                address: tokenTransfer.toUserAccount
+            },
+            fee: data.fee
+        };
     }
-
-    // Comprando MEME com SOL
-    return {
-      type: TransactionType.SWAP,
-      platform: SwapPlatform.PUMP_FUN,
-      signature: data.signature,
-      timestamp: data.timestamp,
-      status: data.transactionError ? "FAILED" : "SUCCESS",
-      inputToken: {
-        mint: "So11111111111111111111111111111111111111112",
-        amount: solAmount,
-        address: this.trackedWallet,
-      },
-      outputToken: {
-        mint: tokenTransfer.mint,
-        amount: tokenTransfer.tokenAmount,
-        address: tokenTransfer.toUserAccount,
-      },
-      fee: data.fee,
-    };
-  }
 }
