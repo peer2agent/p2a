@@ -33,7 +33,7 @@ export class JupiterImpl {
         }
     }
 
-    public selectMode(wallet:WalletDTO, tokenPercentage:number) {
+    public selectMode(wallet:WalletDTO, tokenPercentage:number): number {
         var balance = wallet.usdBalance
 
         switch (true) {
