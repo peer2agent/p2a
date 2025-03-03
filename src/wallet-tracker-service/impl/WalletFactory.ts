@@ -1,4 +1,4 @@
-import { HistorySwapTokenDTO } from "../../dto/HistorySwapTokenDTO";
+import { HistorySwapTokenDTO } from "../dto/HistorySwapTokenDTO";
 
 export class WalletFactory {
   public initialAssetDistribution: any;
@@ -10,7 +10,7 @@ export class WalletFactory {
     this.assets = assets;
   }
 
-  async getAssetsByOwner(wallet: string) {
+  getFilteredAssetsByOwner(wallet: string) {
     console.log(
       `\n[${this.formatTimestamp()}] Starting fetch for wallet: ${wallet}`
     );
@@ -119,20 +119,24 @@ export class WalletFactory {
     });
 
     console.log(`\n[${this.formatTimestamp()}] Asset Distribution:`);
-    distribution.forEach((historySwapTokenDTO: HistorySwapTokenDTO) => {
-      console.log(
-        `Asset Details:\n` +
-          `  - ID: ${historySwapTokenDTO.id}\n` +
-          `  - Symbol: ${historySwapTokenDTO.symbol}\n` +
-          `  - Quantity: ${historySwapTokenDTO.quantity.toFixed(6)}\n` +
-          `  - Total Price: ${historySwapTokenDTO.totalPrice.toFixed(
-            2
-          )} USDC\n` +
-          `  - Distribution: ${historySwapTokenDTO.percentage}%\n`
-      );
-    });
+    // distribution.forEach((historySwapTokenDTO: HistorySwapTokenDTO) => {
+    //   console.log(
+    //     `Asset Details:\n` +
+    //       `  - ID: ${historySwapTokenDTO.id}\n` +
+    //       `  - Symbol: ${historySwapTokenDTO.symbol}\n` +
+    //       `  - Quantity: ${historySwapTokenDTO.quantity.toFixed(6)}\n` +
+    //       `  - Total Price: ${historySwapTokenDTO.totalPrice.toFixed(
+    //         2
+    //       )} USDC\n` +
+    //       `  - Distribution: ${historySwapTokenDTO.percentage}%\n`
+    //   );
+    // });
 
-    this.initialAssetDistribution = distribution.filter((obj:HistorySwapTokenDTO)=>{return obj.percentage >= 0.1});
+    this.initialAssetDistribution = distribution.filter(
+      (obj: HistorySwapTokenDTO) => {
+        return obj.percentage >= 0.1;
+      }
+    );
   }
 
   private formatTimestamp(): string {

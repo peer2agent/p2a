@@ -1,60 +1,48 @@
 import { HeliusClient } from "../client/HeliusClient";
-import { WalletFactory } from "./factory/WalletFactory";
-import { HistorySwapTokenDTO } from "../dto/HistorySwapTokenDTO";
+import { WalletFactory } from "./WalletFactory";
 import { WalletDTO } from "../dto/WalletDTO";
 
 export class WalletTrackerImpl {
   public webhookURL: string;
   public apiKey: string;
+  public heliusClient!: HeliusClient;
 
-  constructor(apiKey: string, webhookURL: string) {
-    this.webhookURL = webhookURL;
-    this.apiKey = apiKey;
+  constructor() {
+    
+    this.webhookURL = process.env.WEBHOOK_URL!!;
+    this.apiKey = process.env.HELIUS_API_KEY!!;
+    
   }
 
-  async initiateServer(wallet: string): Promise<WalletDTO> {
-    const obfuscatedApiKey = `${this.apiKey.slice(0, 3)}***${this.apiKey.slice(
-      -3
-    )}`;
+  async getDistribution(wallet:string): Promise<WalletDTO> {
+    const obfuscatedApiKey = `${this.apiKey.slice(0, 3)}***${this.apiKey.slice(-3)}`;
 
-    console.log(
-      `\n[${new Date().toISOString()}] Initializing WalletTracker...`
-    );
+    console.log(`\n[${new Date().toISOString()}] Initializing WalletTracker...`);
 
     console.log(`[${new Date().toISOString()}] API Key: ${obfuscatedApiKey}`);
-    console.log(`[${new Date().toISOString()}] Wallet Address: ${wallet}\n`);
-    console.log(
-      `[${new Date().toISOString()}] Checking and creating webhook if needed...`
-    );
-    try {
-      const heliusClient = new HeliusClient(
-        this.webhookURL,
-        wallet,
-        this.apiKey
-      );
 
-      const assets = await heliusClient.getAssetsByOwner(wallet);
+    console.log(`[${new Date().toISOString()}] Wallet Address: ${wallet}\n`);
+    
+    console.log(`[${new Date().toISOString()}] Checking and creating webhook if needed...`);
+
+    try {
+    
+      const assets = await this.heliusClient.getAssetsByOwner(wallet);
 
       const tracker = new WalletFactory(assets);
 
-      await heliusClient.createWebhookIfNotExists();
+      console.log(`[${new Date().toISOString()}] Fetching assets for wallet...`);
 
-      console.log(
-        `[${new Date().toISOString()}] Fetching assets for wallet...`
-      );
-
-      await tracker.getAssetsByOwner(wallet);
+      tracker.getFilteredAssetsByOwner(wallet); 
 
       tracker.calculateAssetDistribution();
 
-      console.log(
-        `[${new Date().toISOString()}] Process completed successfully.\n`
-      );
+      console.log(`[${new Date().toISOString()}] Process completed successfully.\n`);
 
       let walletDTO: WalletDTO = {
-        usdBallance: tracker.totalAmountUsd,
+        usdBalance: tracker.totalAmountUsd,
         filteredTokens: tracker.initialAssetDistribution,
-      }
+      };
 
       return walletDTO;
     } catch (error) {
@@ -65,4 +53,24 @@ export class WalletTrackerImpl {
       throw error;
     }
   }
+
+  async createWebhook(wallets: string[]) {
+
+    this.heliusClient = new HeliusClient(
+      this.webhookURL,
+      wallets,
+      this.apiKey
+    );
+
+    console.log(`[${new Date().toISOString()}] Creating webhook...`);
+
+    try {
+      await this.heliusClient.setWebhook();
+    } catch (error) {
+      console.error(
+        `[${new Date().toISOString()}] Error while creating webhook.`,
+        error)
+  }
+}
+
 }

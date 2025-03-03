@@ -2,19 +2,23 @@ import { TrackingInfoInputDTO } from "../../input/dto/TrackingInfoInputDTO";
 import { HistorySwapTokenDTO } from "../../wallet-tracker-service/dto/HistorySwapTokenDTO";
 import { WalletTrackerImpl } from "../../wallet-tracker-service/impl/WalletTrackerImpl";
 import { TrackingService } from "../../output/service/TrackingService";
-import { LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { WalletDTO } from "../../wallet-tracker-service/dto/WalletDTO";
 
 export class TrackingWalletUseCase implements TrackingService {
     
     async usecase(trackingInfoInputDTO:TrackingInfoInputDTO): Promise<any[]> {
         
-        const trackingInfo = new WalletTrackerImpl(trackingInfoInputDTO.apiKey,trackingInfoInputDTO.webhookURL);
-        
         var trackingTokens:WalletDTO[] = []
+        
+        var wallets = trackingInfoInputDTO.trackedWallet.map(wallets => wallets.wallet)
+        
+        const trackingInfo = new WalletTrackerImpl();
 
+        await trackingInfo.createWebhook(wallets);
+        
         await Promise.all(trackingInfoInputDTO.trackedWallet.map(async (wallet) => {
-            trackingTokens.push(await trackingInfo.initiateServer(wallet.wallet))
+            
+            trackingTokens.push(await trackingInfo.getDistribution(wallet.wallet))
         }))
         
         return trackingTokens
