@@ -5,18 +5,29 @@ import { WalletTrackerImpl } from "../../wallet-tracker-service/impl/WalletTrack
 import { TrackingInfoInputDTO } from "../../input/dto/TrackingInfoInputDTO";
 
 
+
 export class RealiseSwap {
     public async usecase(trackingInfoInputDTO: TrackingInfoInputDTO): Promise<any> {
-        const trackingInfo = new WalletTrackerImpl(trackingInfoInputDTO.apiKey, trackingInfoInputDTO.webhookURL);
+        
         const keypairBase58 = process.env.SECRET_KEY!!;
+        
         const keypairBytes = bs58.decode(keypairBase58);
+        
         const keypair = Keypair.fromSecretKey(keypairBytes);
+
+        const wallets = trackingInfoInputDTO.trackedWallet.map(wallets => wallets.wallet)
+        
+        const trackingInfo = new WalletTrackerImpl();
+        
+        await trackingInfo.createWebhook(wallets);
 
         try {
             await Promise.all(trackingInfoInputDTO.trackedWallet.map(async (wallet) => {
-                const swapHistory = await trackingInfo.initiateServer(wallet.wallet);
-                console.log("Quantidade de swaps que serão realizados -> ", swapHistory.length);
 
+                const walletDTO = await trackingInfo.getDistribution(wallet.wallet);
+                
+                const swapHistory = walletDTO.filteredTokens
+    
                 await Promise.all(swapHistory.map(async (token) => { 
                     
                     if (!token.id || token.id.length < 32 || token.id.length > 44) {
@@ -25,7 +36,18 @@ export class RealiseSwap {
                     }
 
                     const outputMint = new PublicKey(token.id);
-                    const swapAmount = BigInt(Math.floor(wallet.value * token.percentage * LAMPORTS_PER_SOL));
+
+                    const trade = new JupiterImpl({
+                        outputMintTokenAddress: outputMint,
+                        inputMintTokenAddress: new PublicKey("So11111111111111111111111111111111111111112"),
+                        connection: new Connection(trackingInfoInputDTO.configTrade!!),
+                        ownerUserKey:keypair,
+                        isSimulation: trackingInfoInputDTO.isSimulation
+                    });
+
+                    var mode = trade.selectMode(walletDTO, token.percentage);
+
+                    const swapAmount = Number(Math.floor(wallet.value * mode * LAMPORTS_PER_SOL));
 
                     if (!swapAmount || swapAmount <= 0) {
                         console.warn(`Skipping swap due to low amount: ${swapAmount}`);
@@ -34,14 +56,8 @@ export class RealiseSwap {
 
                     console.log(`Realise Swap: ${wallet.wallet} --> ${swapAmount}`);
 
-                    const trade = new JupiterImpl({
-                        outputMintTokenAddress: outputMint,
-                        inputMintTokenAddress: new PublicKey("So11111111111111111111111111111111111111112"),
-                        connection: new Connection(trackingInfoInputDTO.configTrade!!),
-                    }, keypair);
-
                     try {
-                        await trade.realiseSwap(Number(swapAmount));
+                        await trade.realiseSwap(swapAmount);
                     } catch (error) {
                         console.error(`Swap failed for ${wallet.wallet}:`, error);
                     }
@@ -53,6 +69,7 @@ export class RealiseSwap {
             return "Completed RealiseSwap";
         }
     }
+
 }
 
 
