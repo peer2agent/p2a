@@ -6,6 +6,7 @@ import { TraderBotUseCase } from "../../usecase/impl/TraderBotUseCase";
 import { RealiseSwap } from "../../usecase/impl/RealiseSwapUseCase";
 import { TrackingInfoInputDTO } from "../../input/dto/TrackingInfoInputDTO";
 import { TransactionProcessorUseCase } from "../../usecase/impl/TransactionProcessorUseCase";
+import { WalletTrackerImpl } from "../../wallet-tracker-service/impl/WalletTrackerImpl";
 
 dotenv.config();
 
@@ -46,12 +47,14 @@ app.post("/start-bot", (req, res) => {
 app.post("/realise-trade", async (req, res) => {
 
   var realiseSwap = new RealiseSwap();
+  
   var tracking: TrackingInfoInputDTO = req.body
   
   await realiseSwap.usecase(tracking);
 
   res.send("ok");
 })
+
 
 app.post("/p2a", (req, res) => {
   console.log("------------------New transaction-----------------")
