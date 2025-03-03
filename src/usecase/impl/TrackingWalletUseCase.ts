@@ -1,21 +1,26 @@
 import { TrackingInfoInputDTO } from "../../input/dto/TrackingInfoInputDTO";
-import { TrackingService} from "../../output/service/TrackingService";
 import { HistorySwapTokenDTO } from "../../wallet-tracker-service/dto/HistorySwapTokenDTO";
 import { WalletTrackerImpl } from "../../wallet-tracker-service/impl/WalletTrackerImpl";
+import { TrackingService } from "../../output/service/TrackingService";
+import { WalletDTO } from "../../wallet-tracker-service/dto/WalletDTO";
 
 export class TrackingWalletUseCase implements TrackingService {
     
-    async usecase(trackingInfoInputDTO:TrackingInfoInputDTO): Promise<HistorySwapTokenDTO[]> {
+    async usecase(trackingInfoInputDTO:TrackingInfoInputDTO): Promise<any[]> {
         
-        const trackingInfo = new WalletTrackerImpl(trackingInfoInputDTO.apiKey,trackingInfoInputDTO.webhookURL);
+        var trackingTokens:WalletDTO[] = []
         
-        var trackingTokens:HistorySwapTokenDTO[]  =[]
+        var wallets = trackingInfoInputDTO.trackedWallet.map(wallets => wallets.wallet)
+        
+        const trackingInfo = new WalletTrackerImpl();
 
-        await Promise.all(
-            trackingInfoInputDTO.trackedWallet.map(async (wallet) => {
-                trackingTokens.push(...await trackingInfo.initiateServer(wallet.wallet))
-            })
-        );
+        await trackingInfo.createWebhook(wallets);
+        
+        await Promise.all(trackingInfoInputDTO.trackedWallet.map(async (wallet) => {
+            
+            trackingTokens.push(await trackingInfo.getDistribution(wallet.wallet))
+        }))
+        
         return trackingTokens
     }
 

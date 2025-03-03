@@ -1,13 +1,16 @@
 import {Connection, Keypair, VersionedTransaction } from '@solana/web3.js';
 import { SwapInfoDTO } from '../dto/SwapInfoDTO';  
 import { Wallet } from '@project-serum/anchor';
+import { randomUUID } from 'crypto';
 
 
 export class JupiterClientSwap {
     private connection: Connection
+    private isSimulationTransaction: boolean;
 
-    constructor(connection: Connection) {
+    constructor(connection: Connection, isSimulation:boolean) {
         this.connection = connection;
+        this.isSimulationTransaction = isSimulation;
     }
 
 
@@ -20,6 +23,11 @@ export class JupiterClientSwap {
         const response = await fetch(url)
         const data = await response.json()
 
+        if (response.status !== 200) {
+            
+            throw new Error(`Failed to fetch swap info: ${data.error} for ${inputMintTokenAddress} to ${outputMintTokenAddress}`);
+        }
+
         return {
             inAmount: data.inAmount,
             otherAmountThreshold: data.otherAmountThreshold,
@@ -28,40 +36,53 @@ export class JupiterClientSwap {
     }
 
     async fetchSwapTransaction(swapUserKeypair:Keypair, swapInfo:SwapInfoDTO) {
+
+        try{
+            const quoteResponse=swapInfo.quoteResponse
+    
+            const swapResponse = await (
+                await fetch('https://quote-api.jup.ag/v6/swap', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify({
+                    // quoteResponse from /quote api
+                    quoteResponse,
+                    // user public key to be used for the swap
+                    userPublicKey: swapUserKeypair.publicKey.toString(),
+                    // auto wrap and unwrap SOL. default is true
+                    wrapAndUnwrapSol: true,
+                    // Optional, use if you want to charge a fee.  feeBps must have been passed in /quote API.
+                    feeAccount: swapUserKeypair.publicKey.toString(),
+    
+                    prioritizationFeeLamports: 20000
+                  })
+                })
+              ).json();
+    
+            
+            const { swapTransaction, lastValidBlockHeight } = swapResponse;
+    
+            return { swapTransaction, lastValidBlockHeight };
+
+        }catch(error){
+            console.error(`m=fetchSwapTransaction error=${error}`)
+            throw error
+        }
         
-        const quoteResponse=swapInfo.quoteResponse
-
-        const swapResponse = await (
-            await fetch('https://quote-api.jup.ag/v6/swap', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({
-                // quoteResponse from /quote api
-                quoteResponse,
-                // user public key to be used for the swap
-                userPublicKey: swapUserKeypair.publicKey.toString(),
-                // auto wrap and unwrap SOL. default is true
-                wrapAndUnwrapSol: true,
-                // Optional, use if you want to charge a fee.  feeBps must have been passed in /quote API.
-                feeAccount: swapUserKeypair.publicKey.toString(),
-
-                prioritizationFeeLamports: 20000
-              })
-            })
-          ).json();
-
-        const { swapTransaction, lastValidBlockHeight } = swapResponse;
-
-        return { swapTransaction, lastValidBlockHeight };
 
     }
 
-    async sendTransaction(swapTransaction: any, swapUserKeypair: Keypair, lastValidBlockHeight: number,): Promise<any> {
+    async sendTransaction(swapTransaction: any, swapUserKeypair: Keypair, lastValidBlockHeight: number): Promise<any> {
 
         if (!swapTransaction) {
-            throw new Error("Received an undefined swapTransaction from Jupiter API");
+            throw new Error(`Received an undefined swapTransaction from Jupiter API -> ${swapTransaction}`);
+        }
+
+        if (this.isSimulationTransaction) {
+            console.log("Simulation mode enabled, skipping transaction...")
+            return randomUUID();
         }
         
         try {
