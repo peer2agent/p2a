@@ -99,25 +99,26 @@ export class OrcaNormalizerImpl extends BaseNormalizerImpl {
 
     console.log("💧 Orca swap detected!");
 
-    return {
-      type: TransactionType.SWAP,
-      platform: SwapPlatform.ORCA,
-      signature: data.signature,
-      timestamp: data.timestamp || Date.now(),
-      status: data.transactionError ? "FAILED" : "SUCCESS",
-      inputToken: {
-        mint: input.mint,
-        amount: Math.abs(input.netAmount),
-        decimals: this.getTokenDecimals(data, input.mint),
-        address: this.trackedWallet,
-      },
-      outputToken: {
-        mint: output.mint,
-        amount: output.netAmount,
-        decimals: this.getTokenDecimals(data, output.mint),
-        address: this.trackedWallet,
-      },
-      fee: data.fee,
-    };
-  }
+        return {
+            trackedWallet: this.trackedWallet,
+            type: TransactionType.SWAP,
+            platform: SwapPlatform.ORCA,
+            signature: data.signature,
+            timestamp: data.timestamp || Date.now(),
+            status: data.transactionError ? "FAILED" : "SUCCESS",
+            inputToken: {
+                mint: input.mint,
+                amount: Math.abs(input.netAmount),
+                decimals: this.getTokenDecimals(data, input.mint),
+                address: this.trackedWallet
+            },
+            outputToken: {
+                mint: output.mint,
+                amount: output.netAmount,
+                decimals: this.getTokenDecimals(data, output.mint),
+                address: this.trackedWallet
+            },
+            fee: data.fee
+        };
+    }
 }

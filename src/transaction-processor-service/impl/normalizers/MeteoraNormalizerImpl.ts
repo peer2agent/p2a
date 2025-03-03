@@ -70,25 +70,26 @@ export class MeteoraImpl extends BaseNormalizerImpl {
       throw new Error("Invalid Meteora swap structure");
     }
 
-    return {
-      type: TransactionType.SWAP,
-      platform: SwapPlatform.METEORA,
-      signature: data.signature,
-      timestamp: data.timestamp || Date.now(),
-      status: data.transactionError ? "FAILED" : "SUCCESS",
-      inputToken: {
-        mint: input.mint,
-        amount: input.tokenAmount,
-        decimals: this.getTokenDecimals(data, input.mint),
-        address: input.fromUserAccount,
-      },
-      outputToken: {
-        mint: output.mint,
-        amount: output.tokenAmount,
-        decimals: this.getTokenDecimals(data, output.mint),
-        address: output.toUserAccount,
-      },
-      fee: data.fee,
-    };
-  }
+        return {
+            trackedWallet: this.trackedWallet,
+            type: TransactionType.SWAP,
+            platform: SwapPlatform.METEORA,
+            signature: data.signature,
+            timestamp: data.timestamp || Date.now(),
+            status: data.transactionError ? "FAILED" : "SUCCESS",
+            inputToken: {
+                mint: input.mint,
+                amount: input.tokenAmount,
+                decimals: this.getTokenDecimals(data, input.mint),
+                address: input.fromUserAccount
+            },
+            outputToken: {
+                mint: output.mint,
+                amount: output.tokenAmount,
+                decimals: this.getTokenDecimals(data, output.mint),
+                address: output.toUserAccount
+            },
+            fee: data.fee
+        };
+    }
 }

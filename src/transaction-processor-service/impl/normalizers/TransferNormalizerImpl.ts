@@ -60,21 +60,22 @@ export class TransferNormalizerImpl extends BaseNormalizerImpl {
     console.log("To:", transfer.toUserAccount);
     console.log("Amount:", transfer.amount / 1e9, "SOL");
 
-    return {
-      type: TransactionType.TRANSFER,
-      signature: data.signature,
-      timestamp: data.timestamp || Date.now(),
-      status: data.transactionError ? "FAILED" : "SUCCESS",
-      fromAddress: transfer.fromUserAccount,
-      toAddress: transfer.toUserAccount,
-      token: {
-        mint: "So11111111111111111111111111111111111111112",
-        amount: transfer.amount / 1e9,
-        decimals: 9,
-      },
-      fee: data.fee,
-    };
-  }
+        return {
+            trackedWallet: this.trackedWallet,
+            type: TransactionType.TRANSFER,
+            signature: data.signature,
+            timestamp: data.timestamp || Date.now(),
+            status: data.transactionError ? "FAILED" : "SUCCESS",
+            fromAddress: transfer.fromUserAccount,
+            toAddress: transfer.toUserAccount,
+            token: {
+                mint: "So11111111111111111111111111111111111111112",
+                amount: transfer.amount / 1e9,
+                decimals: 9
+            },
+            fee: data.fee
+        };
+    }
 
   private normalizeTokenTransfer(data: WebhookData): TransferTransactionDTO {
     const transfer = data.tokenTransfers[0];
@@ -89,19 +90,20 @@ export class TransferNormalizerImpl extends BaseNormalizerImpl {
     console.log("Token:", transfer.mint);
     console.log("Amount:", transfer.tokenAmount);
 
-    return {
-      type: TransactionType.TRANSFER,
-      signature: data.signature,
-      timestamp: data.timestamp || Date.now(),
-      status: data.transactionError ? "FAILED" : "SUCCESS",
-      fromAddress: transfer.fromUserAccount,
-      toAddress: transfer.toUserAccount,
-      token: {
-        mint: transfer.mint,
-        amount: transfer.tokenAmount,
-        decimals: tokenChange?.rawTokenAmount.decimals,
-      },
-      fee: data.fee,
-    };
-  }
+        return {
+            trackedWallet: this.trackedWallet,
+            type: TransactionType.TRANSFER,
+            signature: data.signature,
+            timestamp: data.timestamp || Date.now(),
+            status: data.transactionError ? "FAILED" : "SUCCESS",
+            fromAddress: transfer.fromUserAccount,
+            toAddress: transfer.toUserAccount,
+            token: {
+                mint: transfer.mint,
+                amount: transfer.tokenAmount,
+                decimals: tokenChange?.rawTokenAmount.decimals
+            },
+            fee: data.fee
+        };
+    }
 }

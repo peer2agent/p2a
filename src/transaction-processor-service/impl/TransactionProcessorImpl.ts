@@ -132,27 +132,28 @@ export class TransactionProcessorImpl {
       throw new Error("Invalid swap structure");
     }
 
-    return {
-      type: TransactionType.SWAP,
-      platform,
-      signature: data.signature,
-      timestamp: data.timestamp || Date.now(),
-      status: data.transactionError ? "FAILED" : "SUCCESS",
-      inputToken: {
-        mint: input.mint,
-        amount: input.tokenAmount,
-        decimals: this.getTokenDecimals(data, input.mint),
-        address: input.fromUserAccount,
-      },
-      outputToken: {
-        mint: output.mint,
-        amount: output.tokenAmount,
-        decimals: this.getTokenDecimals(data, output.mint),
-        address: output.toUserAccount,
-      },
-      fee: data.fee,
-    };
-  }
+        return {
+            trackedWallet: this.trackedWallet, 
+            type: TransactionType.SWAP,
+            platform,
+            signature: data.signature,
+            timestamp: data.timestamp || Date.now(),
+            status: data.transactionError ? "FAILED" : "SUCCESS",
+            inputToken: {
+                mint: input.mint,
+                amount: input.tokenAmount,
+                decimals: this.getTokenDecimals(data, input.mint),
+                address: input.fromUserAccount
+            },
+            outputToken: {
+                mint: output.mint,
+                amount: output.tokenAmount,
+                decimals: this.getTokenDecimals(data, output.mint),
+                address: output.toUserAccount
+            },
+            fee: data.fee
+        };
+    }
 
   /**
    * Normaliza uma transação de TRANSFERÊNCIA.
@@ -160,21 +161,22 @@ export class TransactionProcessorImpl {
   private processTransfer(data: WebhookData): TransferTransactionDTO {
     const transfer = data.tokenTransfers[0];
 
-    return {
-      type: TransactionType.TRANSFER,
-      signature: data.signature,
-      timestamp: data.timestamp || Date.now(),
-      status: data.transactionError ? "FAILED" : "SUCCESS",
-      fromAddress: transfer.fromUserAccount,
-      toAddress: transfer.toUserAccount,
-      token: {
-        mint: transfer.mint,
-        amount: transfer.tokenAmount,
-        decimals: this.getTokenDecimals(data, transfer.mint),
-      },
-      fee: data.fee,
-    };
-  }
+        return {
+            trackedWallet: this.trackedWallet,
+            type: TransactionType.TRANSFER,
+            signature: data.signature,
+            timestamp: data.timestamp || Date.now(),
+            status: data.transactionError ? "FAILED" : "SUCCESS",
+            fromAddress: transfer.fromUserAccount,
+            toAddress: transfer.toUserAccount,
+            token: {
+                mint: transfer.mint,
+                amount: transfer.tokenAmount,
+                decimals: this.getTokenDecimals(data, transfer.mint)
+            },
+            fee: data.fee
+        };
+    }
 
   /**
    * Verifica se a transação pode ser classificada como um SWAP.
