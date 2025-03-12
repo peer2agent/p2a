@@ -1,4 +1,4 @@
-import {Connection, Keypair, VersionedTransaction } from '@solana/web3.js';
+import {Connection, Keypair, PublicKey, VersionedTransaction } from '@solana/web3.js';
 import { SwapInfoDTO } from '../dto/SwapInfoDTO';  
 import { Wallet } from '@project-serum/anchor';
 import { randomUUID } from 'crypto';
@@ -132,6 +132,11 @@ export class JupiterClientSwap {
             console.error("Failed to send transaction:", error);
             throw error;
         }
+    }
+
+    async getBalance(address:PublicKey): Promise<number> {
+        const balance = await this.connection.getBalance(address);
+        return balance;
     }
 
 

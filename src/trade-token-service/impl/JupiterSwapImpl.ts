@@ -1,4 +1,4 @@
-import { Keypair} from '@solana/web3.js';
+import { Keypair, PublicKey} from '@solana/web3.js';
 import { InputSwapDTO } from '../dto/InputSwapDTO';
 import { JupiterClientSwap } from '../client/JupiterClientSwap';
 import { WalletDTO } from '../../wallet-tracker-service/dto/WalletDTO';
@@ -6,23 +6,23 @@ import { WalletDTO } from '../../wallet-tracker-service/dto/WalletDTO';
 export class JupiterImpl {
     private jupyterClient:JupiterClientSwap
     private swapUserKeypair:Keypair
-    private outputMintTokenAddress: string;
-    private inputMintTokenAddress: string 
+    private outputMintTokenAddress: PublicKey;
+    private inputMintTokenAddress: PublicKey 
     
 
     constructor(inputSwap:InputSwapDTO) {
         
         const { outputMintTokenAddress, inputMintTokenAddress, connection, ownerUserKey, isSimulation } = inputSwap;
         this.jupyterClient = new JupiterClientSwap(connection,isSimulation)
-        this.inputMintTokenAddress = inputMintTokenAddress.toString()
-        this.outputMintTokenAddress = outputMintTokenAddress.toString()
+        this.inputMintTokenAddress = inputMintTokenAddress
+        this.outputMintTokenAddress = outputMintTokenAddress
         this.swapUserKeypair = ownerUserKey
     }
     
     async realiseSwap(amount:number) {
         try {
             
-            const swapInfo = await this.jupyterClient.fetchSwapInfo(this.inputMintTokenAddress,this.outputMintTokenAddress, amount)
+            const swapInfo = await this.jupyterClient.fetchSwapInfo(this.inputMintTokenAddress.toString(),this.outputMintTokenAddress.toString(), amount)
 
             const {swapTransaction, lastValidBlockHeight} = await this.jupyterClient.fetchSwapTransaction(this.swapUserKeypair, swapInfo)
             
@@ -47,5 +47,9 @@ export class JupiterImpl {
                 console.log("balance menor")
                 return tokenPercentage
         }
+    }
+
+    public async getBalance(): Promise<number> {
+        return this.jupyterClient.getBalance(this.inputMintTokenAddress)
     }
 }
