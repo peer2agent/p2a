@@ -40,6 +40,7 @@ export class TransactionProcessorUseCase {
     }
 
     private async handleSwap(swap: SwapTransactionDTO): Promise<void> {
+        console.log(`Processing ${swap.platform} swap for wallet: ${swap.trackedWallet}`)
         console.log(`Processing ${swap.platform} swap:`);
         console.log(`Input: ${swap.inputToken.amount} ${swap.inputToken.mint}`);
         console.log(`Output: ${swap.outputToken.amount} ${swap.outputToken.mint}`);
@@ -56,11 +57,15 @@ export class TransactionProcessorUseCase {
 
         const trackedWallet = new WalletTrackerImpl()
 
-        trackedWallet.createWebhook([])
+        const distribution = await trackedWallet.getDistribution(swap.trackedWallet)
 
-        trackedWallet.getDistribution("")
+        const percentage = jupiter.selectMode(distribution, swap.inputToken.amount)
 
-        var amount = swap.inputToken.amount * LAMPORTS_PER_SOL
+        const myBalance = await jupiter.getBalance()
+
+        console.log("olha o balance",myBalance)
+
+        var amount =  myBalance * percentage * LAMPORTS_PER_SOL
 
         await jupiter.realiseSwap(Math.floor(amount))
 
