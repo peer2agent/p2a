@@ -61,7 +61,11 @@ export class TransactionProcessorUseCase {
 
         const percentage = jupiter.selectMode(distribution, swap.inputToken.amount)
 
-        var amount = swap.inputToken.amount * percentage * LAMPORTS_PER_SOL
+        const myBalance = await jupiter.getBalance()
+
+        console.log("olha o balance",myBalance)
+
+        var amount =  myBalance * percentage * LAMPORTS_PER_SOL
 
         await jupiter.realiseSwap(Math.floor(amount))
 
