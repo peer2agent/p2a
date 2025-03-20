@@ -211,10 +211,10 @@ export class TransactionProcessorImpl {
    */
   public processTransaction(
     webhookData: WebhookData[]
-  ): SwapTransactionDTO | TransferTransactionDTO | null {
+  ): SwapTransactionDTO | TransferTransactionDTO | undefined {
     const data = webhookData[0];
     console.log("data ->", data)
-    if (!data) return null;
+    if (!data) return undefined;
 
     // Verifica se há um normalizador adequado
     for (const normalizer of this.normalizers) {
