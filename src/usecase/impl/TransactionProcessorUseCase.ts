@@ -77,6 +77,7 @@ export class TransactionProcessorUseCase {
 
     private async handleTransfer(transfer: TransferTransactionDTO): Promise<void> {
         console.log(`Processing transfer:`);
+        console.log(`Processing swap for wallet: ${transfer.trackedWallet}`)
         console.log(`From: ${transfer.fromAddress}`);
         console.log(`To: ${transfer.toAddress}`);
         console.log(`Amount: ${transfer.token.amount} ${transfer.token.mint}`);
