@@ -236,6 +236,13 @@ export class TransactionProcessorImpl {
       return this.processTransfer(data);
     }
 
-    return null;
+    try {
+      return this.normalizeSwap(data)
+
+    } catch (error) {
+      console.error(`Erro ao processar transação: ${error}`);
+      return this.processTransfer(data);
+
+    }
   }
 }
