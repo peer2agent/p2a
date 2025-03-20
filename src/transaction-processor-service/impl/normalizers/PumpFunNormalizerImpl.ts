@@ -34,11 +34,13 @@ interface WebhookData {
   timestamp: number;
   source: string;
   fee: number;
+  feePayer?: string;
   type: string;
   transactionError: any;
 }
 
 export class PumpFunNormalizerImpl extends BaseNormalizerImpl {
+  private trackedWallet: string  = "";
   canHandle(data: WebhookData): boolean {
     return data.source === "PUMP_FUN";
   }
