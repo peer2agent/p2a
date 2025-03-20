@@ -25,6 +25,7 @@ export class TransactionProcessorUseCase {
     async processWebhook(webhookData: any): Promise<void> {
         const transaction = this.processor.processTransaction(webhookData);
         
+        console.log(webhookData[0].data.type?.toUpperCase())
         if (!transaction) {
             console.log("Unknown transaction type");
             return;
