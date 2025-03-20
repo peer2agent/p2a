@@ -213,6 +213,7 @@ export class TransactionProcessorImpl {
     webhookData: WebhookData[]
   ): SwapTransactionDTO | TransferTransactionDTO | null {
     const data = webhookData[0];
+    console.log("data ->", data)
     if (!data) return null;
 
     // Verifica se há um normalizador adequado
