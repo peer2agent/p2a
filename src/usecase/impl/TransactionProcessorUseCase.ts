@@ -12,8 +12,8 @@ export class TransactionProcessorUseCase {
     private pullWallet: Keypair;
     private connection = new Connection("https://api.mainnet-beta.solana.com");
 
-    constructor(trackedWallet: string) {
-        this.processor = new TransactionProcessorImpl(trackedWallet);
+    constructor() {
+        this.processor = new TransactionProcessorImpl();
         
         const keypairBase58 = process.env.SECRET_KEY!!;
 
@@ -60,6 +60,8 @@ export class TransactionProcessorUseCase {
         const distribution = await trackedWallet.getDistribution(swap.trackedWallet)
 
         const percentage = jupiter.selectMode(distribution, swap.inputToken.amount)
+
+        console.log("ta passando aqui :(")
 
         const myBalance = await jupiter.getBalance()
 

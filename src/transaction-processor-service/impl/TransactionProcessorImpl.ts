@@ -23,6 +23,7 @@ interface WebhookTokenTransfer {
 
 interface WebhookData {
   type?: string;
+  feePayer?: string;
   source?: string;
   signature: string;
   timestamp?: number;
@@ -51,18 +52,17 @@ interface WebhookData {
 }
 
 export class TransactionProcessorImpl {
-  private readonly trackedWallet: string;
+  private trackedWallet: string  = "";
   private readonly normalizers: BaseNormalizerImpl[];
 
-  constructor(trackedWallet: string) {
-    this.trackedWallet = trackedWallet;
+  constructor() {
     this.normalizers = [
-      new JupiterNormalizerImpl(trackedWallet),
-      new PumpFunNormalizerImpl(trackedWallet),
-      new RaydiumNormalizerImpl(trackedWallet),
-      new OrcaNormalizerImpl(trackedWallet),
-      new MeteoraImpl(trackedWallet),
-      new TransferNormalizerImpl(trackedWallet),
+      new JupiterNormalizerImpl(),
+      new PumpFunNormalizerImpl(),
+      new RaydiumNormalizerImpl(),
+      new OrcaNormalizerImpl(),
+      new MeteoraImpl(),
+      new TransferNormalizerImpl(),
     ];
   }
 
@@ -108,6 +108,7 @@ export class TransactionProcessorImpl {
    * Normaliza uma transação de SWAP, garantindo que os tokens de entrada e saída sejam corretamente definidos.
    */
   private normalizeSwap(data: WebhookData): SwapTransactionDTO {
+    this.trackedWallet = data.feePayer!!
     const platform = this.identifyPlatform(data);
     const transfers = data.tokenTransfers;
 
