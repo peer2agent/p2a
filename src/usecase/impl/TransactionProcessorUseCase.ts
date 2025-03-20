@@ -57,7 +57,7 @@ export class TransactionProcessorUseCase {
 
         const trackedWallet = new WalletTrackerImpl()
 
-        trackedWallet.createWebhook(
+        await trackedWallet.createWebhook(
             [swap.trackedWallet]
         )
 
