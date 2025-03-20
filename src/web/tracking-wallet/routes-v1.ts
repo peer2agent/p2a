@@ -7,6 +7,7 @@ import { RealiseSwap } from "../../usecase/impl/RealiseSwapUseCase";
 import { TrackingInfoInputDTO } from "../../input/dto/TrackingInfoInputDTO";
 import { TransactionProcessorUseCase } from "../../usecase/impl/TransactionProcessorUseCase";
 import { WalletTrackerImpl } from "../../wallet-tracker-service/impl/WalletTrackerImpl";
+import { Webhook } from "helius-sdk";
 
 dotenv.config();
 
@@ -59,7 +60,8 @@ app.post("/realise-trade", async (req, res) => {
 app.post("/p2a", (req, res) => {
   console.log("------------------New transaction-----------------")
   try {
-    const processor = new TransactionProcessorUseCase(process.env.WALLET_ADDRESS!);
+
+    const processor = new TransactionProcessorUseCase();
     const transaction = processor.processWebhook(req.body);
     
     if (!transaction) {
