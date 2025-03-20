@@ -57,6 +57,10 @@ export class TransactionProcessorUseCase {
 
         const trackedWallet = new WalletTrackerImpl()
 
+        trackedWallet.createWebhook(
+            [swap.trackedWallet]
+        )
+
         const distribution = await trackedWallet.getDistribution(swap.trackedWallet)
 
         const percentage = jupiter.selectMode(distribution, swap.inputToken.amount)
