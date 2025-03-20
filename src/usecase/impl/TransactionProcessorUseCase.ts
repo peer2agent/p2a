@@ -29,58 +29,49 @@ export class TransactionProcessorUseCase {
             console.log("Unknown transaction type");
             return;
         }
-        
-        try {
-            await this.handleSwap(transaction as SwapTransactionDTO);
-        } catch (error) {
-            console.log("Error processing swap transaction", error);
-            await this.handleTransfer(transaction as TransferTransactionDTO);
+
+        if (transaction.type === TransactionType.SWAP) {
+            await this.handleSwap(transaction);
             
+        } else {
+            await this.handleTransfer(transaction);
+
         }
     }
 
     private async handleSwap(swap: SwapTransactionDTO): Promise<void> {
-
-        try {
-
-            console.log(`Processing ${swap.platform} swap for wallet: ${swap.trackedWallet}`)
-            console.log(`Processing ${swap.platform} swap:`);
-            console.log(`Input: ${swap.inputToken.amount} ${swap.inputToken.mint}`);
-            console.log(`Output: ${swap.outputToken.amount} ${swap.outputToken.mint}`);
-
-            
-            const inputSwapDTO: InputSwapDTO = {
-                outputMintTokenAddress: new PublicKey(swap.outputToken.mint),
-                inputMintTokenAddress: new PublicKey(swap.inputToken.mint),  
-                connection: this.connection, 
-                ownerUserKey:this.pullWallet, 
-                isSimulation: false,
-            }
-    
-            const jupiter = new JupiterImpl(inputSwapDTO)
-    
-            const trackedWallet = new WalletTrackerImpl()
-    
-            const distribution = await trackedWallet.getDistribution(swap.trackedWallet)
-    
-            const percentage = jupiter.selectMode(distribution, swap.inputToken.amount)
-    
-            console.log("ta passando aqui :(")
-    
-            const myBalance = await jupiter.getBalance()
-    
-            console.log("olha o balance",myBalance)
-    
-            var amount =  myBalance * percentage * LAMPORTS_PER_SOL
-    
-            await jupiter.realiseSwap(Math.floor(amount))
-    
-            console.log("Copy trade realized successfully")
-
-        } catch (error) {
-            console.log("Error processing swap transaction", error);
+        console.log(`Processing ${swap.platform} swap for wallet: ${swap.trackedWallet}`)
+        console.log(`Processing ${swap.platform} swap:`);
+        console.log(`Input: ${swap.inputToken.amount} ${swap.inputToken.mint}`);
+        console.log(`Output: ${swap.outputToken.amount} ${swap.outputToken.mint}`);
+        
+        const inputSwapDTO: InputSwapDTO = {
+            outputMintTokenAddress: new PublicKey(swap.outputToken.mint),
+            inputMintTokenAddress: new PublicKey(swap.inputToken.mint),  
+            connection: this.connection, 
+            ownerUserKey:this.pullWallet, 
+            isSimulation: false,
         }
 
+        const jupiter = new JupiterImpl(inputSwapDTO)
+
+        const trackedWallet = new WalletTrackerImpl()
+
+        const distribution = await trackedWallet.getDistribution(swap.trackedWallet)
+
+        const percentage = jupiter.selectMode(distribution, swap.inputToken.amount)
+
+        console.log("ta passando aqui :(")
+
+        const myBalance = await jupiter.getBalance()
+
+        console.log("olha o balance",myBalance)
+
+        var amount =  myBalance * percentage * LAMPORTS_PER_SOL
+
+        await jupiter.realiseSwap(Math.floor(amount))
+
+        console.log("Copy trade realized successfully")
 
     }
 
