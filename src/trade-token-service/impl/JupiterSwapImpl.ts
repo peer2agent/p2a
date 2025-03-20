@@ -50,6 +50,8 @@ export class JupiterImpl {
     }
 
     public async getBalance(): Promise<number> {
-        return this.jupyterClient.getBalance(this.inputMintTokenAddress)
+        var balance= this.jupyterClient.getBalance(this.inputMintTokenAddress)
+        console.log(balance)
+        return balance
     }
 }

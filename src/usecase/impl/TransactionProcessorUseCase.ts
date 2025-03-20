@@ -71,7 +71,7 @@ export class TransactionProcessorUseCase {
 
         console.log("olha o balance",myBalance)
 
-        var amount =  myBalance * percentage * LAMPORTS_PER_SOL
+        var amount =  myBalance * percentage
 
         await jupiter.realiseSwap(Math.floor(amount))
 
