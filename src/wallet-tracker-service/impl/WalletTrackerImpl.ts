@@ -29,6 +29,8 @@ export class WalletTrackerImpl {
     
       const assets = await this.heliusClient.getAssetsByOwner(wallet);
 
+      console.log(assets)
+
       const tracker = new WalletFactory(assets);
 
       console.log(`[${new Date().toISOString()}] Fetching assets for wallet...`);
