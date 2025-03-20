@@ -4,6 +4,7 @@ import { BaseNormalizerImpl } from "./BaseNormalizerImpl";
 
 interface WebhookData {
   source?: string;
+  feePayer?: string;
   tokenTransfers: {
     fromUserAccount: string;
     toUserAccount: string;
@@ -30,6 +31,7 @@ interface WebhookData {
 }
 
 export class MeteoraImpl extends BaseNormalizerImpl {
+  private trackedWallet: string  = "";
   // Program ID da Meteora
   private readonly METEORA_PROGRAM_ID =
     "LBUZKhRxPF3XUpBCjp4YzTKgLccjZhTSDM9YuVaPwxo";

@@ -17,6 +17,7 @@ interface WebhookData {
   timestamp?: number;
   transactionError?: any;
   fee?: number;
+  feePayer?: string;
   accountData?: {
     account: string;
     tokenBalanceChanges: {
@@ -30,6 +31,7 @@ interface WebhookData {
 }
 
 export class RaydiumNormalizerImpl extends BaseNormalizerImpl {
+  private trackedWallet: string  = "";
   canHandle(data: WebhookData): boolean {
     return data.source === "RAYDIUM";
   }
