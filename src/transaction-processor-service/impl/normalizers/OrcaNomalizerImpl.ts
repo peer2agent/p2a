@@ -36,7 +36,6 @@ interface WebhookData {
 }
 
 export class OrcaNormalizerImpl extends BaseNormalizerImpl {
-  private trackedWallet: string  = "";
   // Lista de program IDs conhecidos da Orca
   private readonly ORCA_PROGRAM_IDS = [
     "whirLbMiicVdio4qvUfM5KAg6Ct8VwpYzGff3uctyCc", // Whirlpool
