@@ -57,14 +57,14 @@ export class TransactionProcessorUseCase {
             
             const inputSwapDTO: InputSwapDTO = {
                 outputMintTokenAddress: new PublicKey(swap.outputToken.mint),
-                inputMintTokenAddress: new PublicKey(swap.inputToken.mint),  
+                inputMintTokenAddress: solToken,  
                 connection: this.connection, 
                 ownerUserKey:this.pullWallet, 
                 isSimulation: false,
             }
 
-            if ((inputSwapDTO.outputMintTokenAddress || inputSwapDTO.inputMintTokenAddress) !== solToken) {
-                console.log("Swap is not for SOL token, skipping")
+            if ((inputSwapDTO.outputMintTokenAddress && inputSwapDTO.inputMintTokenAddress) === solToken) {
+                console.log("Invalid swap structure")
                 return
             }
     
