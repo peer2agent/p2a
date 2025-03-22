@@ -34,7 +34,6 @@ interface WebhookData {
 }
 
 export class TransferNormalizerImpl extends BaseNormalizerImpl {
-  private trackedWallet: string  = "";
   canHandle(data: WebhookData): boolean {
     return data.type === "TRANSFER";
   }

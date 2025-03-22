@@ -31,7 +31,6 @@ interface WebhookData {
 }
 
 export class RaydiumNormalizerImpl extends BaseNormalizerImpl {
-  private trackedWallet: string  = "";
   canHandle(data: WebhookData): boolean {
     return data.source === "RAYDIUM";
   }

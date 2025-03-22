@@ -41,7 +41,6 @@ interface WebhookData {
 }
 
 export class JupiterNormalizerImpl extends BaseNormalizerImpl {
-  private trackedWallet: string  = "";
 
   canHandle(data: WebhookData): boolean {
     return data.source === "JUPITER";
@@ -62,7 +61,6 @@ export class JupiterNormalizerImpl extends BaseNormalizerImpl {
   }
 
   normalize(data: WebhookData): SwapTransactionDTO {
-    this.trackedWallet = data.feePayer!!
     const transfers = data.tokenTransfers;
     let input, output;
 

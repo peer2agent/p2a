@@ -40,7 +40,6 @@ interface WebhookData {
 }
 
 export class PumpFunNormalizerImpl extends BaseNormalizerImpl {
-  private trackedWallet: string  = "";
   canHandle(data: WebhookData): boolean {
     return data.source === "PUMP_FUN";
   }

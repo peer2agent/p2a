@@ -61,7 +61,7 @@ app.post("/p2a", (req, res) => {
   console.log("------------------New transaction-----------------")
   try {
 
-    const processor = new TransactionProcessorUseCase();
+    const processor = new TransactionProcessorUseCase(process.env.TRACKED_WALLET!!);
     const transaction = processor.processWebhook(req.body);
     
     if (!transaction) {

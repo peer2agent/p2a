@@ -12,8 +12,8 @@ export class TransactionProcessorUseCase {
     private pullWallet: Keypair;
     private connection = new Connection("https://api.mainnet-beta.solana.com");
 
-    constructor() {
-        this.processor = new TransactionProcessorImpl();
+    constructor(trackedWallet: string) {
+        this.processor = new TransactionProcessorImpl(trackedWallet);
         
         const keypairBase58 = process.env.SECRET_KEY!!;
 
