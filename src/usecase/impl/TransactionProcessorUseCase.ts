@@ -53,20 +53,29 @@ export class TransactionProcessorUseCase {
             console.log(`Input: ${swap.inputToken.amount} ${swap.inputToken.mint}`);
             console.log(`Output: ${swap.outputToken.amount} ${swap.outputToken.mint}`);
             
-            var solToken = new PublicKey("So11111111111111111111111111111111111111112") 
+            var solToken = "So11111111111111111111111111111111111111112" 
             
-            const inputSwapDTO: InputSwapDTO = {
-                outputMintTokenAddress: new PublicKey(swap.outputToken.mint),
-                inputMintTokenAddress: solToken,  
-                connection: this.connection, 
-                ownerUserKey:this.pullWallet, 
-                isSimulation: false,
+            let inputSwapDTO: InputSwapDTO
+            
+            if ((swap.outputToken.mint !== solToken) && (swap.inputToken.mint !== solToken) ) {
+                inputSwapDTO = {
+                    outputMintTokenAddress: new PublicKey(swap.outputToken.mint),
+                    inputMintTokenAddress: new PublicKey(solToken),  
+                    connection: this.connection, 
+                    ownerUserKey:this.pullWallet, 
+                    isSimulation: false,
+                }
+            } else {
+                inputSwapDTO = {
+                    outputMintTokenAddress: new PublicKey(swap.outputToken.mint),
+                    inputMintTokenAddress: new PublicKey(swap.inputToken.mint),  
+                    connection: this.connection, 
+                    ownerUserKey:this.pullWallet, 
+                    isSimulation: false,
+                }
             }
-
-            if ((inputSwapDTO.outputMintTokenAddress && inputSwapDTO.inputMintTokenAddress) === solToken) {
-                console.log("Invalid swap structure")
-                return
-            }
+            
+            
     
             const jupiter = new JupiterImpl(inputSwapDTO)
     
