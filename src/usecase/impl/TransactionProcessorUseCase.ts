@@ -92,6 +92,8 @@ export class TransactionProcessorUseCase {
             const myBalance = await jupiter.getBalance()
     
             var amount =  myBalance * percentage
+
+            console.log("total amount contributed ->", amount)
     
             await jupiter.realiseSwap(Math.floor(amount))
     
