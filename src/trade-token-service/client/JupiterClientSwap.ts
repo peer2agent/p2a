@@ -18,7 +18,7 @@ export class JupiterClientSwap {
 
         console.log("fetchSwapInfo2")
         
-        var url = `https://quote-api.jup.ag/v6/quote?inputMint=${inputMintTokenAddress}&outputMint=${outputMintTokenAddress}&amount=${amount}&swapMode=ExactOut&slippageBps=1`
+        var url = `https://quote-api.jup.ag/v6/quote?inputMint=${inputMintTokenAddress}&outputMint=${outputMintTokenAddress}&amount=${amount}&slippageBps=1`
         console.log(url)
         const response = await fetch(url)
         const data = await response.json()
