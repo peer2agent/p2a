@@ -56,6 +56,15 @@ app.post("/realise-trade", async (req, res) => {
   res.send("ok");
 })
 
+app.post("/test", async (req, res) => {
+  const url = "https://quote-api.jup.ag/v6/quote?inputMint=So11111111111111111111111111111111111111112&outputMint=D5ZA9HSXrdoRFxNnUyki6NAd3sUrpZF72Hmda5M4xyBt&amount=10016&slippageBps=1"
+  const response = await fetch(url)
+  const data = await response.json()
+  res.send(data)
+
+  res.send("ok");
+})
+
 
 app.post("/p2a", (req, res) => {
   console.log("------------------New transaction-----------------")
