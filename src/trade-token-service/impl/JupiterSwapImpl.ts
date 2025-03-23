@@ -8,6 +8,7 @@ export class JupiterImpl {
     private swapUserKeypair:Keypair
     private outputMintTokenAddress: PublicKey;
     private inputMintTokenAddress: PublicKey 
+    private myPublicKey: PublicKey
     
 
     constructor(inputSwap:InputSwapDTO) {
@@ -17,6 +18,7 @@ export class JupiterImpl {
         this.inputMintTokenAddress = inputMintTokenAddress
         this.outputMintTokenAddress = outputMintTokenAddress
         this.swapUserKeypair = ownerUserKey
+        this.myPublicKey = new PublicKey(process.env.MY_PUBLIC_KEY!!);
     }
     
     async realiseSwap(amount:number) {
@@ -50,7 +52,7 @@ export class JupiterImpl {
     }
 
     public async getBalance(): Promise<number> {
-        var balance= await this.jupyterClient.getBalance(this.inputMintTokenAddress)
+        var balance= await this.jupyterClient.getBalance(this.myPublicKey)
         console.log("my balance ->", balance)
         return balance
     }
