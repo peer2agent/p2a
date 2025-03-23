@@ -62,7 +62,7 @@ app.post("/teste", async (req, res) => {
 
   var jupiter = new JupiterClientSwap(new Connection("https://api.mainnet-beta.solana.com"),false)
 
-  const myBalance = await jupiter.getBalance(new PublicKey("So11111111111111111111111111111111111111112"))
+  const myBalance = await jupiter.getBalance(new PublicKey("BrSe6VQsP2noN7RQ215aNYt8ZN33QyHQkdpBbGott9ro"))
 
   console.log("My balance ->", myBalance)
   
