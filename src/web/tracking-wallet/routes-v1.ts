@@ -59,7 +59,7 @@ app.post("/realise-trade", async (req, res) => {
 })
 
 app.post("/test", async (req, res) => {
-  const url = "https://quote-api.jup.ag/v6/quote?inputMint=So11111111111111111111111111111111111111112&outputMint=D5ZA9HSXrdoRFxNnUyki6NAd3sUrpZF72Hmda5M4xyBt&amount=10016&slippageBps=1"
+  const url = "https://quote-api.jup.ag/v6/quote?inputMint=So11111111111111111111111111111111111111112&outputMint=D5ZA9HSXrdoRFxNnUyki6NAd3sUrpZF72Hmda5M4xyBt&amount=100&slippageBps=1"
   const response = await fetch(url)
   const data = await response.json()
   console.log("olha data",data)
