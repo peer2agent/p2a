@@ -25,10 +25,11 @@ export class JupiterImpl {
         try {
             
             const swapInfo = await this.jupyterClient.fetchSwapInfo(this.inputMintTokenAddress.toString(),this.outputMintTokenAddress.toString(), amount)
-
+            console.log("passou o swapInfo")
             const {swapTransaction, lastValidBlockHeight} = await this.jupyterClient.fetchSwapTransaction(this.swapUserKeypair, swapInfo)
-            
+            console.log("Fez o fatch das transações")
             await this.jupyterClient.sendTransaction(swapTransaction,this.swapUserKeypair, lastValidBlockHeight)
+            console.log("Finalizou a transação")
         
         } catch (error) {
             console.error('Error', error)
