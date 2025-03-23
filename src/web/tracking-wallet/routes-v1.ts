@@ -8,6 +8,8 @@ import { TrackingInfoInputDTO } from "../../input/dto/TrackingInfoInputDTO";
 import { TransactionProcessorUseCase } from "../../usecase/impl/TransactionProcessorUseCase";
 import { WalletTrackerImpl } from "../../wallet-tracker-service/impl/WalletTrackerImpl";
 import { Webhook } from "helius-sdk";
+import { JupiterClientSwap } from "../../trade-token-service/client/JupiterClientSwap";
+import { Connection, PublicKey } from "@solana/web3.js";
 
 dotenv.config();
 
@@ -53,6 +55,17 @@ app.post("/realise-trade", async (req, res) => {
   
   await realiseSwap.usecase(tracking);
 
+  res.send("ok");
+})
+
+app.post("/teste", async (req, res) => {
+
+  var jupiter = new JupiterClientSwap(new Connection("https://api.mainnet-beta.solana.com"),false)
+
+  const myBalance = await jupiter.getBalance(new PublicKey("So11111111111111111111111111111111111111112"))
+
+  console.log("My balance ->", myBalance)
+  
   res.send("ok");
 })
 
