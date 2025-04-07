@@ -14,7 +14,9 @@ import { LogSwapArgsDTO } from "../dto/LogSwapArgsDTO";
 import { SwapToken } from "../enum/SwapToken";
 import { JupiterClientSwap } from "../client/JupiterClientSwap";
 import { SwapInfoDTO } from "../dto/SwapInfoDTO";
-import { SnsImpl } from "../../event-producer/sns/impl/SnsImpl";
+// import { SnsImpl } from "../../event-producer/sns/impl/SnsImpl";
+import { SNSNotificationProducer } from "../../event-producer/sns/impl/SNSNotificationProducer";
+import { SQSMessageProducer } from "../../event-producer/sqs/impl/SQSMessageProducer";
 import { SendMessageInput } from "../../input/dto/SendMessageInputDTO";
 import { randomUUID } from "crypto";
 
@@ -35,7 +37,8 @@ export class TraderBotImpl {
     private jupyterClient: JupiterClientSwap;
     private isSolInput: boolean = true;
     private firstTrade: boolean = true;
-    private snsImpl: SnsImpl;
+    private notificationProducer: SNSNotificationProducer;
+    private messageProducer: SQSMessageProducer;
 
     constructor(config: TraderBotConfigDTO) {
       const {
@@ -50,8 +53,15 @@ export class TraderBotImpl {
       } = config;
       //migrar para a connection
       this.solanaConnection = new Connection(solanaEndpoint);
+
+      // pegar do dotenv
+      var topicArn = 'topic-arn';
+      var region = 'aws-region';
+      var queueUrl = 'queueUrl';
       
-      this.snsImpl = new SnsImpl(randomUUID())
+      this.notificationProducer = new SNSNotificationProducer(topicArn, region);
+      this.messageProducer = new SQSMessageProducer(queueUrl, region);
+
       //migrar para a connection
       this.jupyterClient = new JupiterClientSwap(this.solanaConnection,isSimulation)
       
@@ -261,7 +271,8 @@ export class TraderBotImpl {
       id: txid
     }
 
-    this.snsImpl.sendMessage(message)
+    this.notificationProducer.publishNotification(message);
+    this.messageProducer.sendMessage(message);
   }
   
   private async updateNextTrade(lastTrade: QuoteResponse): Promise<void> {
