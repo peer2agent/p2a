@@ -6,6 +6,7 @@ import { TraderBotUseCase } from "../../usecase/impl/TraderBotUseCase";
 import { RealiseSwap } from "../../usecase/impl/RealiseSwapUseCase";
 import { TrackingInfoInputDTO } from "../../input/dto/TrackingInfoInputDTO";
 import { TransactionProcessorUseCase } from "../../usecase/impl/TransactionProcessorUseCase";
+import {  SendRewardToTraderUseCase } from "../../usecase/impl/SendRewardToTraderUseCase";
 
 dotenv.config();
 
@@ -86,6 +87,20 @@ app.post("/p2a", (req, res) => {
     });
   }
 });
+
+app.post("/solana", async (req,res)=>{
+  try {
+    var sendReconpenseToTrader = new SendRewardToTraderUseCase(req.body.user)
+    await sendReconpenseToTrader.usecase(req.body.amount,req.body.recipient)
+    
+    res.send("ok")
+  } catch (error) {
+    (res.status(400).json({
+      status:"error",
+      message:error
+    }))
+  }
+})
 
 
 function formatTimestamp(): string {
