@@ -20,6 +20,7 @@ interface WebhookData {
   transactionError?: any;
   fee?: number;
   type?: string;
+  feePayer?: string;
   accountData?: {
     account: string;
     tokenBalanceChanges: {

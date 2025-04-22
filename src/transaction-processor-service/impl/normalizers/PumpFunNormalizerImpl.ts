@@ -34,6 +34,7 @@ interface WebhookData {
   timestamp: number;
   source: string;
   fee: number;
+  feePayer?: string;
   type: string;
   transactionError: any;
 }

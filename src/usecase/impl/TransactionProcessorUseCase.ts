@@ -23,58 +23,90 @@ export class TransactionProcessorUseCase {
     }
 
     async processWebhook(webhookData: any): Promise<void> {
-        const transaction = this.processor.processTransaction(webhookData);
-        
-        if (!transaction) {
-            console.log("Unknown transaction type");
-            return;
-        }
-
-        if (transaction.type === TransactionType.SWAP) {
-            await this.handleSwap(transaction);
+        try {
             
-        } else {
-            await this.handleTransfer(transaction);
-
-        }
-    }
+            const transaction = this.processor.processTransaction(webhookData);
+            
+            if (!transaction) {
+                console.log("Unknown transaction type");
+                return;
+            }
+    
+            if (transaction.type === TransactionType.SWAP) {
+                await this.handleSwap(transaction);
+                
+            } else {
+                await this.handleTransfer(transaction);
+    
+            }
+        
+        } catch (error) {
+            console.log("Error processing webhook", error)
+            
+        }}
 
     private async handleSwap(swap: SwapTransactionDTO): Promise<void> {
-        console.log(`Processing ${swap.platform} swap for wallet: ${swap.trackedWallet}`)
-        console.log(`Processing ${swap.platform} swap:`);
-        console.log(`Input: ${swap.inputToken.amount} ${swap.inputToken.mint}`);
-        console.log(`Output: ${swap.outputToken.amount} ${swap.outputToken.mint}`);
-        
-        const inputSwapDTO: InputSwapDTO = {
-            outputMintTokenAddress: new PublicKey(swap.outputToken.mint),
-            inputMintTokenAddress: new PublicKey(swap.inputToken.mint),  
-            connection: this.connection, 
-            ownerUserKey:this.pullWallet, 
-            isSimulation: false,
+        try {
+            
+            console.log(`Processing ${swap.platform} swap for wallet: ${swap.trackedWallet}`)
+            console.log(`Processing ${swap.platform} swap:`);
+            console.log(`Input: ${swap.inputToken.amount} ${swap.inputToken.mint}`);
+            console.log(`Output: ${swap.outputToken.amount} ${swap.outputToken.mint}`);
+            
+            var solToken = "So11111111111111111111111111111111111111112" 
+            
+            let inputSwapDTO: InputSwapDTO
+            
+            if ((swap.outputToken.mint !== solToken) && (swap.inputToken.mint !== solToken) ) {
+                inputSwapDTO = {
+                    outputMintTokenAddress: new PublicKey(swap.outputToken.mint),
+                    inputMintTokenAddress: new PublicKey(solToken),  
+                    connection: this.connection, 
+                    ownerUserKey:this.pullWallet, 
+                    isSimulation: false,
+                }
+            } else {
+                inputSwapDTO = {
+                    outputMintTokenAddress: new PublicKey(swap.outputToken.mint),
+                    inputMintTokenAddress: new PublicKey(swap.inputToken.mint),  
+                    connection: this.connection, 
+                    ownerUserKey:this.pullWallet, 
+                    isSimulation: false,
+                }
+            }
+            
+            
+    
+            const jupiter = new JupiterImpl(inputSwapDTO)
+    
+            const trackedWallet = new WalletTrackerImpl()
+    
+            await trackedWallet.createWebhook(
+                [swap.trackedWallet]
+            )
+    
+            const distribution = await trackedWallet.getDistribution(swap.trackedWallet)
+    
+            const percentage = jupiter.selectMode(distribution, swap.inputToken.amount)
+    
+            const myBalance = await jupiter.getBalance()
+    
+            var amount =  myBalance * percentage
+
+            console.log("total amount contributed ->", amount)
+    
+            await jupiter.realiseSwap(Math.floor(amount))
+    
+            console.log("Copy trade realized successfully")
+        } catch (error) {
+            console.log("Error processing swap", error)
         }
-
-        const jupiter = new JupiterImpl(inputSwapDTO)
-
-        const trackedWallet = new WalletTrackerImpl()
-
-        const distribution = await trackedWallet.getDistribution(swap.trackedWallet)
-
-        const percentage = jupiter.selectMode(distribution, swap.inputToken.amount)
-
-        const myBalance = await jupiter.getBalance()
-
-        console.log("olha o balance",myBalance)
-
-        var amount =  myBalance * percentage * LAMPORTS_PER_SOL
-
-        await jupiter.realiseSwap(Math.floor(amount))
-
-        console.log("Copy trade realized successfully")
 
     }
 
     private async handleTransfer(transfer: TransferTransactionDTO): Promise<void> {
         console.log(`Processing transfer:`);
+        console.log(`Processing swap for wallet: ${transfer.trackedWallet}`)
         console.log(`From: ${transfer.fromAddress}`);
         console.log(`To: ${transfer.toAddress}`);
         console.log(`Amount: ${transfer.token.amount} ${transfer.token.mint}`);

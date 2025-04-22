@@ -19,6 +19,7 @@ interface SwapEvent {
 
 interface WebhookData {
   source?: string;
+  feePayer?: string;
   tokenTransfers: TokenTransfer[];
   signature: string;
   timestamp?: number;
@@ -40,6 +41,7 @@ interface WebhookData {
 }
 
 export class JupiterNormalizerImpl extends BaseNormalizerImpl {
+
   canHandle(data: WebhookData): boolean {
     return data.source === "JUPITER";
   }

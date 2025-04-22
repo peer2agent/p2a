@@ -64,7 +64,7 @@ export class HeliusClient {
 
   async getAssetsByOwner(wallet: string): Promise<any> {
     console.log(`\n[${this.formatTimestamp()}] Starting fetch for wallet: ${wallet}`);
-
+    
     try {
       const assets = await this.helius.rpc.getAssetsByOwner({
         ownerAddress: wallet,

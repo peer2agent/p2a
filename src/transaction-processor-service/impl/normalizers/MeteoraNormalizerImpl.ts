@@ -4,6 +4,7 @@ import { BaseNormalizerImpl } from "./BaseNormalizerImpl";
 
 interface WebhookData {
   source?: string;
+  feePayer?: string;
   tokenTransfers: {
     fromUserAccount: string;
     toUserAccount: string;

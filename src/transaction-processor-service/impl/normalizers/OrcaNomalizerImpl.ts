@@ -14,6 +14,7 @@ interface TokenTransfer {
 
 interface WebhookData {
   source?: string;
+  feePayer?: string;
   tokenTransfers: TokenTransfer[];
   signature: string;
   timestamp?: number;
