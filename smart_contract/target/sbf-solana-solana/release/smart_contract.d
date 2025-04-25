@@ -1,0 +1,1 @@
+/home/txrmarcos/wallet-tracker-sol/smart_contract/target/sbf-solana-solana/release/smart_contract.so: /home/txrmarcos/wallet-tracker-sol/smart_contract/src/instructions.rs /home/txrmarcos/wallet-tracker-sol/smart_contract/src/lib.rs
