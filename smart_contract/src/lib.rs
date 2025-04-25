@@ -1,61 +1,91 @@
-use solana_program::{
-    account_info::AccountInfo,
-    entrypoint,
-    entrypoint::ProgramResult,
-    pubkey::Pubkey,
-    msg,
-    program_error::ProgramError,
-};
+use anchor_lang::prelude::*;
 
-mod instructions;
+declare_id!("5BRwGqtuzRWX5c1eae5Yr4h2aqXuBuuSz9PpVDVa5wEZ");
 
-use instructions::AddTokenInstruction;
+#[program]
+pub mod vai_project {
+    use super::*;
 
-entrypoint!(process_instruction);
-
-pub fn process_instruction(
-    _program_id: &Pubkey,
-    accounts: &[AccountInfo],
-    instruction_data: &[u8],
-) -> ProgramResult {
-    use solana_program::{program::invoke, system_instruction, account_info::next_account_info};
-
-    msg!("Hello, world!");
-    msg!("I am programId-> {}", _program_id);
-    msg!("I am accounts -> {:?}", accounts);
-    msg!("I am instruction_data -> {:?}", instruction_data);
-
-    let instruction = AddTokenInstruction::unpack(instruction_data)?;
-
-    let account_info_iter = &mut accounts.iter();
-    let payer_info = next_account_info(account_info_iter)?;          // [0]
-    let system_program_info = next_account_info(account_info_iter)?; // [1]
-    let recipient_info = next_account_info(account_info_iter)?;      // [2]
-
-    match instruction {
-        AddTokenInstruction::Set { amount, recipient } => {
-            msg!("Instruction: Set {{ amount: {}, recipient: {} }}", amount, recipient);
-
-            // Confirma se o recipient passado no instruction_data bate com o que está em accounts
-            if *recipient_info.key != recipient {
-                msg!("❌ Recipient mismatch!");
-                return Err(ProgramError::InvalidAccountData);
-            }
-
-            let ix = system_instruction::transfer(
-                payer_info.key,
-                &recipient,
-                amount as u64,
-            );
-
-            invoke(
-                &ix,
-                &[payer_info.clone(), recipient_info.clone(), system_program_info.clone()],
-            )?;
-
-            msg!("✅ Transferência de {} lamports feita para {}", amount, recipient);
-        }
+    // user 
+    pub fn make_transfer(ctx: Context<UserAccount>) -> Result<()> {
+        Ok(())
     }
 
-    Ok(())
+    pub fn make_apport(ctx: Context<UserAccount>, apport_value: u16) -> Result<()> {
+        let pote = &mut ctx.accounts.pote;
+        pote.amount = apport_value; 
+        pote.signer = ctx.accounts.signer.key();
+        Ok(())
+    }
+
+    //trader
+    pub fn trader_is_allowed(ctx: Context<TraderAccount>) -> Result<()> {
+        if !ctx.accounts.permission.is_allowed {
+            return Err(ErrorCode::NotAllowed.into());
+        }
+        Ok(())
+    }
+
+    pub fn is_allowed(ctx: Context<CheckPermission>) -> Result<()> {
+        ctx.accounts.permission.is_allowed = true;
+        Ok(()) 
+    }
 }
+
+#[derive(Accounts)]
+pub struct UserAccount<'info> {
+    #[account(mut)]
+    pub signer: Signer<'info>,
+
+    pub system_program: Program<'info, System>,
+
+    #[account(
+        init,
+        payer = signer,
+        space = 8 + 2 + 32,
+        seeds = [b"pote", signer.key().as_ref()],
+        bump,
+    )]
+    pub pote: Account<'info, Apport>,
+}
+
+#[derive(Accounts)]
+pub struct TraderAccount<'info> {
+    #[account(
+        init,
+        payer = signer,
+        space = 8 + 1,
+        seeds = [b"permission", signer.key().as_ref()],
+        bump,
+    )]
+    pub permission: Account<'info, PermissionToTrade>,
+
+    #[account(mut)]
+    pub signer: Signer<'info>,
+
+    pub system_program: Program<'info, System>,
+}
+#[derive(Accounts)]
+pub struct CheckPermission<'info> {
+    #[account(mut)]
+    pub permission: Account<'info, PermissionToTrade>,
+    pub signer: Signer<'info>,
+}
+
+#[account]
+pub struct Apport {
+    pub amount: u16,
+    pub signer: Pubkey,
+}
+
+#[account]
+pub struct PermissionToTrade {
+    pub is_allowed: bool,
+}
+
+#[error_code]
+pub enum ErrorCode {
+    #[msg("Trader is not allowed")]
+    NotAllowed,
+}
+
