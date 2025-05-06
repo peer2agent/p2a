@@ -1,9 +1,0 @@
-/home/txrmarcos/wallet-tracker-sol/smart_contract/target/sbf-solana-solana/release/deps/libsolana_loader_v4_interface-65561d2fac64ac83.rmeta: /home/txrmarcos/.cargo/registry/src/index.crates.io-6f17d22bba15001f/solana-loader-v4-interface-2.2.1/src/lib.rs /home/txrmarcos/.cargo/registry/src/index.crates.io-6f17d22bba15001f/solana-loader-v4-interface-2.2.1/src/instruction.rs /home/txrmarcos/.cargo/registry/src/index.crates.io-6f17d22bba15001f/solana-loader-v4-interface-2.2.1/src/state.rs
-
-/home/txrmarcos/wallet-tracker-sol/smart_contract/target/sbf-solana-solana/release/deps/libsolana_loader_v4_interface-65561d2fac64ac83.rlib: /home/txrmarcos/.cargo/registry/src/index.crates.io-6f17d22bba15001f/solana-loader-v4-interface-2.2.1/src/lib.rs /home/txrmarcos/.cargo/registry/src/index.crates.io-6f17d22bba15001f/solana-loader-v4-interface-2.2.1/src/instruction.rs /home/txrmarcos/.cargo/registry/src/index.crates.io-6f17d22bba15001f/solana-loader-v4-interface-2.2.1/src/state.rs
-
-/home/txrmarcos/wallet-tracker-sol/smart_contract/target/sbf-solana-solana/release/deps/solana_loader_v4_interface-65561d2fac64ac83.d: /home/txrmarcos/.cargo/registry/src/index.crates.io-6f17d22bba15001f/solana-loader-v4-interface-2.2.1/src/lib.rs /home/txrmarcos/.cargo/registry/src/index.crates.io-6f17d22bba15001f/solana-loader-v4-interface-2.2.1/src/instruction.rs /home/txrmarcos/.cargo/registry/src/index.crates.io-6f17d22bba15001f/solana-loader-v4-interface-2.2.1/src/state.rs
-
-/home/txrmarcos/.cargo/registry/src/index.crates.io-6f17d22bba15001f/solana-loader-v4-interface-2.2.1/src/lib.rs:
-/home/txrmarcos/.cargo/registry/src/index.crates.io-6f17d22bba15001f/solana-loader-v4-interface-2.2.1/src/instruction.rs:
-/home/txrmarcos/.cargo/registry/src/index.crates.io-6f17d22bba15001f/solana-loader-v4-interface-2.2.1/src/state.rs:
