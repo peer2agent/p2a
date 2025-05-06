@@ -7,3 +7,4 @@ test-ledger
 .yarn
 trader.json
 user.json
+.env
