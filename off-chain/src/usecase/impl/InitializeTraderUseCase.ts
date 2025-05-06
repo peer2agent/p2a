@@ -31,4 +31,16 @@ export class InitializeTraderUseCase{
             console.error("getFollowList -> ",error)
         }
     }
+
+    async addFollow(userKeypair:Keypair,traderPubkey:PublicKey) {
+        try {
+            const traderImpl = new TraderImpl(userKeypair)
+    
+            traderImpl.addFollow(userKeypair,traderPubkey)
+            
+        } catch (error) {
+            console.log("error -> ", error)
+        }
+
+    }
 }

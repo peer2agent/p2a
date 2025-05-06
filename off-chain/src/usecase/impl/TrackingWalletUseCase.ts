@@ -1,5 +1,4 @@
 import { TrackingInfoInputDTO } from "../../input/dto/TrackingInfoInputDTO";
-import { HistorySwapTokenDTO } from "../../wallet-tracker-service/dto/HistorySwapTokenDTO";
 import { WalletTrackerImpl } from "../../wallet-tracker-service/impl/WalletTrackerImpl";
 import { TrackingService } from "../../output/service/TrackingService";
 import { WalletDTO } from "../../wallet-tracker-service/dto/WalletDTO";

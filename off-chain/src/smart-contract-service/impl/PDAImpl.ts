@@ -152,7 +152,7 @@ export class PDAImpl {
         try {
             const [followListPda] = this.getPDA("follow_list", traderPublicKey);
             const followList = await this.program.account.listOfFollow.fetch(followListPda);
-            return followList.follows.map((pk: any) => pk.toBase58());
+            return followList.follows.map((pk: any) => pk);
         } catch (error) {
             console.error("Error fetching followers:", error);
             throw error;

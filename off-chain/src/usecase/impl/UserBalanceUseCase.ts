@@ -1,4 +1,4 @@
-import { Keypair, PublicKey } from "@solana/web3.js";
+import { Keypair } from "@solana/web3.js";
 import { UserImpl } from "../../smart-contract-service/impl/UserImpl";
 
 export class UserBalanceUseCase{
@@ -6,7 +6,6 @@ export class UserBalanceUseCase{
 
     constructor(userKeypair:Keypair) {
         const userImpl = new UserImpl(userKeypair)
-        console.log("ddsadas")
         this.userImpl = userImpl
     }
 

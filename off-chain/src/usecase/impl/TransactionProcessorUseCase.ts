@@ -1,25 +1,14 @@
 import { TransactionType } from "helius-sdk";
 import { SwapTransactionDTO, TransferTransactionDTO } from "../../transaction-processor-service/dto/TransactionDTO";
 import { TransactionProcessorImpl } from "../../transaction-processor-service/impl/TransactionProcessorImpl";
-import { JupiterImpl } from "../../trade-token-service/impl/JupiterSwapImpl";
-import { InputSwapDTO } from "../../trade-token-service/dto/InputSwapDTO";
-import { Connection, Keypair, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
-import bs58 from "bs58";
-import { WalletTrackerImpl } from "../../wallet-tracker-service/impl/WalletTrackerImpl";
+import { PublicKey } from "@solana/web3.js";
+import { RealiseSwapByPDAUseCase } from "./RealiseSwapByPDAUseCase";
 
 export class TransactionProcessorUseCase {
     private processor: TransactionProcessorImpl;
-    private pullWallet: Keypair;
-    private connection = new Connection("https://api.mainnet-beta.solana.com");
 
     constructor(trackedWallet: string) {
         this.processor = new TransactionProcessorImpl(trackedWallet);
-        
-        const keypairBase58 = process.env.SECRET_KEY!!;
-
-        const keypairBytes = bs58.decode(keypairBase58);
-
-        this.pullWallet = Keypair.fromSecretKey(keypairBytes);
     }
 
     async processWebhook(webhookData: any): Promise<void> {
@@ -46,6 +35,7 @@ export class TransactionProcessorUseCase {
         }}
 
     private async handleSwap(swap: SwapTransactionDTO): Promise<void> {
+
         try {
             
             console.log(`Processing ${swap.platform} swap for wallet: ${swap.trackedWallet}`)
@@ -53,50 +43,20 @@ export class TransactionProcessorUseCase {
             console.log(`Input: ${swap.inputToken.amount} ${swap.inputToken.mint}`);
             console.log(`Output: ${swap.outputToken.amount} ${swap.outputToken.mint}`);
             
-            var solToken = "So11111111111111111111111111111111111111112" 
-            
-            let inputSwapDTO: InputSwapDTO
-            
-            if ((swap.outputToken.mint !== solToken) && (swap.inputToken.mint !== solToken) ) {
-                inputSwapDTO = {
-                    outputMintTokenAddress: new PublicKey(swap.outputToken.mint),
-                    inputMintTokenAddress: new PublicKey(solToken),  
-                    connection: this.connection, 
-                    ownerUserKey:this.pullWallet, 
-                    isSimulation: false,
-                }
-            } else {
-                inputSwapDTO = {
-                    outputMintTokenAddress: new PublicKey(swap.outputToken.mint),
-                    inputMintTokenAddress: new PublicKey(swap.inputToken.mint),  
-                    connection: this.connection, 
-                    ownerUserKey:this.pullWallet, 
-                    isSimulation: false,
-                }
-            }
-            
-            
-    
-            const jupiter = new JupiterImpl(inputSwapDTO)
-    
-            const trackedWallet = new WalletTrackerImpl()
-    
-            await trackedWallet.createWebhook(
-                [swap.trackedWallet]
-            )
-    
-            const distribution = await trackedWallet.getDistribution(swap.trackedWallet)
-    
-            const percentage = jupiter.selectMode(distribution, swap.inputToken.amount)
-    
-            const myBalance = await jupiter.getBalance(this.pullWallet.publicKey)
-    
-            var amount =  myBalance * percentage
 
-            console.log("total amount contributed ->", amount)
-    
-            await jupiter.realiseSwap(Math.floor(amount))
-    
+            const realiseSwapByPDAUseCase = new RealiseSwapByPDAUseCase()
+
+            const outputMintTokenAddress = new PublicKey(swap.outputToken.mint)
+            
+            const inputMintTokenAddress= new PublicKey(swap.inputToken.mint)
+
+            //TODO NOYMA VAI APLICAR A LOGICA PARA EXTRAIR O VALOR PARA O TRADE
+            
+            var amount =  500
+
+            await realiseSwapByPDAUseCase.execute(new PublicKey(swap.trackedWallet),amount,inputMintTokenAddress,outputMintTokenAddress)
+        
+        
             console.log("Copy trade realized successfully")
         } catch (error) {
             console.log("Error processing swap", error)
@@ -112,5 +72,4 @@ export class TransactionProcessorUseCase {
         console.log(`Amount: ${transfer.token.amount} ${transfer.token.mint}`);
     }
 
-    //TODO: ADD LOGICA DE TRANSFER
 }

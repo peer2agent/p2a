@@ -1,4 +1,4 @@
-import { Keypair} from "@solana/web3.js";
+import { Keypair, PublicKey} from "@solana/web3.js";
 import { RewardTraderClient } from "../client/RewardTraderClient";
 import * as anchor from "@coral-xyz/anchor";
 import { P2a } from "../../../../target/types/p2a";
@@ -57,12 +57,10 @@ export class TraderImpl {
         }
     }
 
-    async addFollow(user:Keypair) {
+    async addFollow(user:Keypair,traderPublicKey:PublicKey) {
         try {
             const trader = this.trader
-            const traderPublicKey = this.trader.publicKey
-            const [followListPda] = this.rewardTraderClient.getPDA("follow_list", traderPublicKey);
-
+            
             await this.program.methods
                 .addFollower(traderPublicKey)
                 .accounts({

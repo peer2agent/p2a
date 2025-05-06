@@ -131,10 +131,11 @@ app.post("/trader/init-trader", async (req, res) => {
   try {
     const keypair = anchor.web3.Keypair.fromSecretKey(
       new Uint8Array(JSON.parse(fs.readFileSync(
-        '/home/inteli/.config/solana/id.json', 'utf8'
+        '/home/inteli/Desktop/wallet-tracker-sol/trader.json', 'utf8'
       )))
   );    
     const initializeTraderUseCase = new InitializeTraderUseCase();
+    console.log("trader ->",keypair.publicKey.toString())
     await initializeTraderUseCase.execute(keypair);
 
     res.send({ message: "PDA on for" });
@@ -148,13 +149,30 @@ app.post("/trader/init-trader", async (req, res) => {
 
 app.post("/trader/followers", async (req, res) => {
   try {
-    const keypair = anchor.web3.Keypair.fromSecretKey(
-      new Uint8Array(JSON.parse(fs.readFileSync(
-        '/home/inteli/.config/solana/id.json', 'utf8'
-      )))
-  );    
+    const publicKey = new PublicKey(req.body.publicKey)
+  
     const initializeTraderUseCase = new InitializeTraderUseCase();
-    await initializeTraderUseCase.getFollowList(keypair.publicKey);
+    await initializeTraderUseCase.getFollowList(publicKey);
+
+    res.send({ message: "PDA on for" });
+  } catch (error) {
+    res.status(400).json({
+      status: "error",
+      message: error,
+    });
+  }
+});
+
+app.post("/user/follow-trader", async (req, res) => {
+  try {
+    const keypairBase58 = process.env.SECRET_KEY!!;
+    const keypairBytes = bs58.decode(keypairBase58);
+    const keypair = Keypair.fromSecretKey(keypairBytes);
+
+    const publicKey = new PublicKey(req.body.publicKey)
+  
+    const initializeTraderUseCase = new InitializeTraderUseCase();
+    await initializeTraderUseCase.addFollow(keypair,publicKey);
 
     res.send({ message: "PDA on for" });
   } catch (error) {
