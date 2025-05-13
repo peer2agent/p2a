@@ -4,8 +4,8 @@ services:
     build: .
     ports:
       - "3001:3001"
-    environment:
-      - SECRET_KEY=${SECRET_KEY}
+    env_file:
+      - .env
     volumes:
       - ~/.config/solana:/root/.config/solana
     restart: unless-stopped 
