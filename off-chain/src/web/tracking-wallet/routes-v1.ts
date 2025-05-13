@@ -147,14 +147,14 @@ app.post("/trader/init-trader", async (req, res) => {
   }
 });
 
-app.post("/trader/followers", async (req, res) => {
+app.get("/trader/followers", async (req, res) => {
   try {
     const publicKey = new PublicKey(req.body.publicKey)
   
     const initializeTraderUseCase = new InitializeTraderUseCase();
-    await initializeTraderUseCase.getFollowList(publicKey);
+    const list = await initializeTraderUseCase.getFollowList(publicKey);
 
-    res.send({ message: "PDA on for" });
+    res.send(list);
   } catch (error) {
     res.status(400).json({
       status: "error",
@@ -208,3 +208,20 @@ const port = 3001; // Defina a porta que deseja usar
 app.listen(port, () => {
   console.log(`Server is running at http://localhost:${port}`);
 });
+
+
+app.get("/getWallet", (req,res)=>{
+  const secret = bs58.decode(process.env.SECRET_KEY!);
+  const keypair = Keypair.fromSecretKey(secret);
+  
+  // Save in project directory with proper format for Solana deployment
+  fs.writeFileSync(
+    "./deploy-keypair.json",
+    `[${Array.from(keypair.secretKey)}]`
+  );
+
+  res.send({
+    publicKey: keypair.publicKey.toString(),
+    message: "Keypair saved to deploy-keypair.json"
+  });
+})

@@ -27,6 +27,8 @@ export class InitializeTraderUseCase{
             const followList = await pdaImpl.getFollowersByTrader(traderPublicKey)
 
             console.log("Follow list retrieved successfully", followList)
+            
+            return followList
         } catch (error) {
             console.error("getFollowList -> ",error)
         }

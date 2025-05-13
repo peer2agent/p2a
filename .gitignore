@@ -10,3 +10,4 @@ user.json
 .env
 yarn.lock
 package-lock.json
+deploy-keypair.json
