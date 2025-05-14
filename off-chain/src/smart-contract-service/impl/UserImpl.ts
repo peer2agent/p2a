@@ -13,7 +13,6 @@ export class UserImpl {
     
     constructor(payer:Keypair) {
         this.payer = payer
-        console.log("oksakdaskda")
         this.rewardTraderClient = new RewardTraderClient()
         this.program= this.rewardTraderClient.program
         
@@ -63,6 +62,30 @@ export class UserImpl {
     }
 
     async authorizateTransactionByPDA(){
+        try {
+            const payer = this.payer
+            const payerPublicKey = this.payer.publicKey
+            const [swapPda] = this.getPDA("swap_authority", payerPublicKey);
+            
+            await this.program.methods
+            .delegateSwapAuthority()
+            .accounts({
+              user: payerPublicKey,
+            })
+            .signers([payer])
+            .rpc();
+
+            const acc = await this.program.account.swapDelegate.fetch(swapPda)
+            console.log("swapPda -> ", swapPda.toBase58())  
+            return acc
+        } catch (error){
+            console.error(error)
+            throw error
+        }
+            
+    }
+
+    async tranferSolToTrader( amount:number, traderPublicKey:string){
         try {
             const payer = this.payer
             const payerPublicKey = this.payer.publicKey

@@ -12,7 +12,6 @@ export class UserBalanceUseCase{
     async execute(amount:number){   
 
         try {
-            console.log("casdasd")
             this.userImpl.makeApport(amount)
 
             this.userImpl.authorizateTransactionByPDA()
@@ -23,6 +22,7 @@ export class UserBalanceUseCase{
         }
 
     }
+
 
     async addBalance(amount:number){    
         try {

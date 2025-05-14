@@ -3,6 +3,7 @@ import { Connection, Keypair, PublicKey,LAMPORTS_PER_SOL} from "@solana/web3.js"
 import bs58 from 'bs58';
 import { WalletTrackerImpl } from "../../wallet-tracker-service/impl/WalletTrackerImpl";
 import { TrackingInfoInputDTO } from "../../input/dto/TrackingInfoInputDTO";
+import { WalletDTO } from "../../wallet-tracker-service/dto/WalletDTO";
 
 
 
@@ -13,7 +14,7 @@ export class RealiseSwapByJupiterUseCase {
         
         const keypairBytes = bs58.decode(keypairBase58);
         
-        const keypair = Keypair.fromSecretKey(keypairBytes);
+        const keypair = Keypair.fromSecretKey(keypairBytes); //TODO
 
         const wallets = trackingInfoInputDTO.trackedWallet.map(wallets => wallets.wallet)
         
@@ -40,12 +41,11 @@ export class RealiseSwapByJupiterUseCase {
                     const trade = new JupiterImpl({
                         outputMintTokenAddress: outputMint,
                         inputMintTokenAddress: new PublicKey("So11111111111111111111111111111111111111112"),
-                        connection: new Connection(trackingInfoInputDTO.configTrade!!),
                         ownerUserKey:keypair,
                         isSimulation: trackingInfoInputDTO.isSimulation
                     });
 
-                    var mode = trade.selectMode(walletDTO, token.percentage);
+                    var mode = this.selectMode(walletDTO, token.percentage);
 
                     const swapAmount = Number(Math.floor(wallet.value * mode * LAMPORTS_PER_SOL));
 
@@ -67,6 +67,22 @@ export class RealiseSwapByJupiterUseCase {
             console.error(`[${new Date().toISOString()}] Error during RealiseSwap execution.`, error);
         } finally {
             return "Completed RealiseSwap";
+        }
+    }
+
+    public selectMode(distribution:WalletDTO, tokenPercentage:number): number {
+        var balance = distribution.usdBalance
+
+        switch (true) {
+            case balance >= 50_000:
+                console.log("balance >= 50_000")
+                return 0.1
+            case balance < 50_000 && balance >=10_000:
+                console.log("balance >= 10_000")
+                return 0.05
+            default:
+                console.log("balance menor")
+                return tokenPercentage
         }
     }
 

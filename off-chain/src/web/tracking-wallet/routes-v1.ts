@@ -85,44 +85,58 @@ app.post("/p2a", (req, res) => {
   }
 });
 
-app.post("/user/apport", async (req, res) => {
+app.post("/user/apport", async (req:any, res:any) => {
   try {
-    const keypairBase58 = process.env.SECRET_KEY!!;
-    
-    const keypairBytes = bs58.decode(keypairBase58);
+    const { secretKey } = req.body;
+    if (!secretKey) {
+      return res.status(400).json({
+        status: "error",
+        message: "Secret key is required"
+      });
+    }
+
+    const keypairBytes = bs58.decode(secretKey);
     const keypair = Keypair.fromSecretKey(keypairBytes);
-    console.log(keypair.publicKey.toString())
-
-    console.log(keypair.publicKey.toString())
-
+    
     const sendReconpenseToTrader = new UserBalanceUseCase(keypair);
     await sendReconpenseToTrader.execute(0.5);
 
-    res.send({ message: "PDA on for" });
+    res.send({ 
+      message: "User initialized successfully",
+      publicKey: keypair.publicKey.toString()
+    });
   } catch (error) {
     res.status(400).json({
       status: "error",
-      message: error,
+      message: error instanceof Error ? error.message : "Unknown error occurred"
     });
   }
 });
 
-app.post("/user/add-balance", async (req, res) => {
+app.post("/user/add-balance", async (req:any, res:any) => {
   try {
-    const keypairBase58 = process.env.SECRET_KEY!!;
-    const keypairBytes = bs58.decode(keypairBase58);
-    const keypair = Keypair.fromSecretKey(keypairBytes);
-    const amount = req.body.amount;
+    const { secretKey, amount } = req.body;
+    if (!secretKey || amount === undefined) {
+      return res.status(400).json({
+        status: "error",
+        message: "Secret key and amount are required"
+      });
+    }
 
+    const keypairBytes = bs58.decode(secretKey);
+    const keypair = Keypair.fromSecretKey(keypairBytes);
 
     const sendReconpenseToTrader = new UserBalanceUseCase(keypair);
     await sendReconpenseToTrader.addBalance(amount);
 
-    res.send({ message: "PDA on for" });
+    res.send({ 
+      message: "Balance added successfully",
+      publicKey: keypair.publicKey.toString()
+    });
   } catch (error) {
     res.status(400).json({
       status: "error",
-      message: error,
+      message: error instanceof Error ? error.message : "Unknown error occurred"
     });
   }
 });
@@ -163,43 +177,63 @@ app.get("/trader/followers", async (req, res) => {
   }
 });
 
-app.post("/user/follow-trader", async (req, res) => {
+app.post("/user/follow-trader", async (req:any, res:any) => {
   try {
-    const keypairBase58 = process.env.SECRET_KEY!!;
-    const keypairBytes = bs58.decode(keypairBase58);
+    const { secretKey, traderPublicKey } = req.body;
+    if (!secretKey || !traderPublicKey) {
+      return res.status(400).json({
+        status: "error",
+        message: "Secret key and trader public key are required"
+      });
+    }
+
+    const keypairBytes = bs58.decode(secretKey);
     const keypair = Keypair.fromSecretKey(keypairBytes);
+    const publicKey = new PublicKey(traderPublicKey);
 
-    const publicKey = new PublicKey(req.body.publicKey)
-  
     const initializeTraderUseCase = new InitializeTraderUseCase();
-    await initializeTraderUseCase.addFollow(keypair,publicKey);
+    await initializeTraderUseCase.addFollow(keypair, publicKey);
 
-    res.send({ message: "PDA on for" });
+    res.send({ 
+      message: "Successfully followed trader",
+      userPublicKey: keypair.publicKey.toString(),
+      traderPublicKey: traderPublicKey
+    });
   } catch (error) {
     res.status(400).json({
       status: "error",
-      message: error,
+      message: error instanceof Error ? error.message : "Unknown error occurred"
     });
   }
 });
 
-app.post("/executeSwap", async (req, res) => {
+app.post("/executeSwap", async (req:any, res:any) => {
   try {
+    const { secretKey, amount, inputMintTokenAddress, outputMintTokenAddress } = req.body;
+    if (!secretKey || !amount || !inputMintTokenAddress || !outputMintTokenAddress) {
+      return res.status(400).json({
+        status: "error",
+        message: "Secret key, amount, input token address, and output token address are required"
+      });
+    }
 
-    const pk:PublicKey = req.body.publicKey
-    const amount:number = req.body.amount
-    const inputMintTokenAddress:PublicKey = new PublicKey(req.body.inputMintTokenAddress)
-    const outputMintTokenAddress:PublicKey = new PublicKey(req.body.outputMintTokenAddress)
+    const keypairBytes = bs58.decode(secretKey);
+    const keypair = Keypair.fromSecretKey(keypairBytes);
+    const inputMint = new PublicKey(inputMintTokenAddress);
+    const outputMint = new PublicKey(outputMintTokenAddress);
 
     var sendReconpenseToTrader = new RealiseSwapByPDAUseCase();
+    const value = await sendReconpenseToTrader.execute(keypair.publicKey, amount, inputMint, outputMint);
 
-    const value = await sendReconpenseToTrader.execute(pk,amount,inputMintTokenAddress,outputMintTokenAddress);
-
-    res.send({ message: "Pote criado!", poteAtual: value });
+    res.send({ 
+      message: "Swap executed successfully",
+      result: value,
+      publicKey: keypair.publicKey.toString()
+    });
   } catch (error) {
     res.status(400).json({
       status: "error",
-      message: error,
+      message: error instanceof Error ? error.message : "Unknown error occurred"
     });
   }
 });
@@ -210,18 +244,3 @@ app.listen(port, () => {
 });
 
 
-app.get("/getWallet", (req,res)=>{
-  const secret = bs58.decode(process.env.SECRET_KEY!);
-  const keypair = Keypair.fromSecretKey(secret);
-  
-  // Save in project directory with proper format for Solana deployment
-  fs.writeFileSync(
-    "./deploy-keypair.json",
-    `[${Array.from(keypair.secretKey)}]`
-  );
-
-  res.send({
-    publicKey: keypair.publicKey.toString(),
-    message: "Keypair saved to deploy-keypair.json"
-  });
-})

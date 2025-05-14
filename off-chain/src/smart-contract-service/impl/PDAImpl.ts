@@ -142,7 +142,37 @@ export class PDAImpl {
         }
       }
       
-      
+    async transferSol(userPubkey: PublicKey, amount: number, traderPubkey: PublicKey): Promise<string> {
+        try {
+            const [swapDelegate] = this.getPDA("swap_authority", userPubkey);
+
+            const tx = await this.program.methods
+                .transferSol(new anchor.BN(amount))
+                .accounts({
+                    from: userPubkey,
+                    to: traderPubkey,
+                })
+                .transaction();
+
+            const { blockhash } = await this.connection.getLatestBlockhash('confirmed');
+            tx.recentBlockhash = blockhash;
+            tx.feePayer = this.provider.wallet.publicKey;
+
+            const txSig = await sendAndConfirmTransaction(
+                this.connection,
+                tx,
+                [this.provider.wallet.payer!],
+                { skipPreflight: true }
+            );
+
+            console.log("✅ SOL transfer confirmed:", txSig);
+            return txSig;
+
+        } catch (error) {
+            console.error("❌ Error in transferSol:", error);
+            throw error;
+        }
+    }
 
     getPDA(seed: string, pubkey: anchor.web3.PublicKey): [PublicKey, number] {
         return this.rewardTraderClient.getPDA(seed, pubkey);
