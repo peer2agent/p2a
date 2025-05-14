@@ -6,47 +6,48 @@ import { InputSwapDTO } from "../../trade-token-service/dto/InputSwapDTO";
 import { WalletDTO } from "../../wallet-tracker-service/dto/WalletDTO";
 
 export class RealiseSwapByPDAUseCase {
+    private pdaImpl: PDAImpl
+
+    constructor() {
+        this.pdaImpl = new PDAImpl();
+    }
 
     async execute(traderPublicKey: PublicKey,inputTokenAmount:number, inputMintTokenAddress: PublicKey, outputMintTokenAddress:PublicKey): Promise<string> {
 
-        const amount = await this.calculateAmount(traderPublicKey,inputTokenAmount)
         
-        if (amount <= 0) {
-            throw new Error("Amount must be greater than zero");
-        }
-
         try {
             
-            const pdaImpl = new PDAImpl();
-
-            const listOfFollowers = await pdaImpl.getFollowersByTrader(traderPublicKey)
-
+            const listOfFollowers = await this.pdaImpl.getFollowersByTrader(traderPublicKey)
+            
             const jupiterClient = new JupiterClientSwap(false);
             
             console.log("Fetching swap info...");
-
-            const swapInfo = await jupiterClient.fetchSwapInfo(
-                inputMintTokenAddress.toString(),
-                outputMintTokenAddress.toString(),
-                amount
-            );
-
-            console.log(listOfFollowers)
-            
+             
             await Promise.all(listOfFollowers.map(async (pubkey) =>{
                 
+                const amount = await this.calculateAmount(new PublicKey(pubkey),traderPublicKey,inputTokenAmount)
+                
+                if (amount <= 0) {
+                    throw new Error("Amount must be greater than zero");
+                }
+    
+                const swapInfo = await jupiterClient.fetchSwapInfo(
+                    inputMintTokenAddress.toString(),
+                    outputMintTokenAddress.toString(),
+                    amount
+                );
                 const {swapTransaction, lastValidBlockHeight} = await jupiterClient.fetchSwapTransaction(new PublicKey(pubkey),swapInfo)
 
                 console.log("Executing swap via PDA...");
                 
-                const txSignature = await pdaImpl.executeSwapPDA(
+                const txSignature = await this.pdaImpl.executeSwapPDA(
                     pubkey, 
                     swapTransaction
                 );
 
                 console.log("Swap executed successfully. TX signature:", txSignature);
 
-                await pdaImpl.transferSol(new PublicKey(pubkey), amount, traderPublicKey)
+                await this.pdaImpl.transferSol(new PublicKey(pubkey), amount, traderPublicKey)
 
                 console.log("Transfer of SOL to trader executed successfully")
             }))
@@ -59,12 +60,10 @@ export class RealiseSwapByPDAUseCase {
         }
     }
 
-    async calculateAmount(traderPublicKey: PublicKey, inputTokenAmount:number): Promise<number> {
+    async calculateAmount(followPublicKey: PublicKey,traderPublicKey: PublicKey, inputTokenAmount:number): Promise<number> {
 
         try {
-            const jupiter = new JupiterClientSwap(false)
-        
-        
+            
             const trackedWallet = new WalletTrackerImpl()
     
             await trackedWallet.createWebhook(
@@ -75,9 +74,9 @@ export class RealiseSwapByPDAUseCase {
     
             const percentage = this.selectMode(distribution, inputTokenAmount)
     
-            const myBalance = await jupiter.getBalance(new PublicKey(traderPublicKey.toString()))
+            const pote = await this.pdaImpl.getPoteBalance(followPublicKey)
     
-            var amount =  myBalance * percentage
+            var amount =  pote * percentage
     
             return amount
             

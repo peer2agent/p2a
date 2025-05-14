@@ -39,48 +39,62 @@ export class TransactionProcessorUseCase {
             
         }}
 
-    private async handleSwap(swap: SwapTransactionDTO): Promise<void> {
-
-        try {
-            
-            console.log(`Processing ${swap.platform} swap for wallet: ${swap.trackedWallet}`)
-            console.log(`Processing ${swap.platform} swap:`);
-            console.log(`Input: ${swap.inputToken.amount} ${swap.inputToken.mint}`);
-            console.log(`Output: ${swap.outputToken.amount} ${swap.outputToken.mint}`);
-            
-
-            const realiseSwapByPDAUseCase = new RealiseSwapByPDAUseCase()
-            
-            const solToken = "So11111111111111111111111111111111111111112";
-            
-            // Verify input and output tokens
-            const jupiter = new JupiterClientSwap(false);
-            
-            // Check if we need to route through SOL token
-            let inputTokenToUse = swap.inputToken.mint;
-            let outputTokenToUse = swap.outputToken.mint;
-            
-            // If neither token is SOL, we need to:
-            // 1. First swap SOL -> input token
-            // 2. Then swap input token -> output token
-            if (swap.inputToken.mint !== solToken && swap.outputToken.mint !== solToken) {
-                console.log("Neither token is SOL, routing through SOL first");
-                inputTokenToUse = solToken;
+        private async handleSwap(swap: SwapTransactionDTO): Promise<void> {
+            try {
+              const jupiter = new JupiterClientSwap(false);
+              const swapper = new RealiseSwapByPDAUseCase();
+              const wallet  = new PublicKey(swap.trackedWallet);
+              const solMint = new PublicKey("So11111111111111111111111111111111111111112");
+              const inMint  = new PublicKey(swap.inputToken.mint);
+              const outMint = new PublicKey(swap.outputToken.mint);
+              const sellAmt = swap.inputToken.amount;
+              const buyAmt  = swap.outputToken.amount;
+          
+              // fetch balances
+              const inBal  = await jupiter.getSPLTokenBalance(wallet, inMint);
+              const outBal = await jupiter.getSPLTokenBalance(wallet, outMint);
+          
+              let routeFrom: PublicKey;
+              let routeTo:   PublicKey;
+          
+              if (inBal >= sellAmt && outBal >= buyAmt) {
+                // both tokens present → exact swap
+                routeFrom = inMint;
+                routeTo   = outMint;
+          
+              } else if (inBal >= sellAmt) {
+                // only input present → input→output
+                routeFrom = inMint;
+                routeTo   = outMint;
+          
+              } else if (outBal >= buyAmt) {
+                // only output present → reverse: output→input
+                routeFrom = outMint;
+                routeTo   = inMint;
+          
+              } else {
+                // neither present → fall back to SOL trades
+                // decide if original was a “buy output” or “sell input”
+                const originalWasBuy = sellAmt > 0 && buyAmt > 0;
+                if (originalWasBuy) {
+                  routeFrom = solMint;
+                  routeTo   = outMint;
+                } else {
+                  routeFrom = solMint;
+                  routeTo   = inMint;
+                }
+              }
+          
+              console.log(`Routing trade ${routeFrom.toBase58()} → ${routeTo.toBase58()} for ${sellAmt}`);
+              await swapper.execute(wallet, sellAmt, routeFrom, routeTo);
+              console.log("Copy trade realized successfully");
+          
+            } catch (err) {
+              console.error("Error processing swap", err);
             }
-            
-
-            const outputMintTokenAddress = new PublicKey(inputTokenToUse)
-        
-            const inputMintTokenAddress= new PublicKey(outputTokenToUse)
-
-            await realiseSwapByPDAUseCase.execute(new PublicKey(swap.trackedWallet),swap.inputToken.amount,inputMintTokenAddress,outputMintTokenAddress)
-
-            console.log("Copy trade realized successfully")
-        } catch (error) {
-            console.log("Error processing swap", error)
-        }
-
-    }
+          }
+          
+          
 
     private async handleTransfer(transfer: TransferTransactionDTO): Promise<void> {
         console.log(`Processing transfer:`);

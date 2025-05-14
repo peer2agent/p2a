@@ -32,7 +32,6 @@ export class UserImpl {
             })
             .signers([payer])
             .rpc()
-            console.log("passou")
             return potePda.toBase58()
 
         }catch (e) {
@@ -108,7 +107,6 @@ export class UserImpl {
         }
             
     }
-
 
     private getPDA(seed: string, pubkey: anchor.web3.PublicKey){
         return this.rewardTraderClient.getPDA(seed, pubkey)
