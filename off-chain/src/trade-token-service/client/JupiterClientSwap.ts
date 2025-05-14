@@ -159,5 +159,20 @@ export class JupiterClientSwap {
         return balance;
     }
 
-
+    async getSPLTokenBalance(
+        owner: PublicKey,
+        mint: PublicKey
+      ): Promise<number> {
+        const resp = await this.connection.getParsedTokenAccountsByOwner(owner, {
+          mint,
+        });
+    
+        // sum up all token‐account balances (in ui units)
+        return resp.value.reduce((sum, { account }) => {
+          // navigate parsed JSON to the amount
+          const info = (account.data as any).parsed.info;
+          const amt = info.tokenAmount.uiAmount ?? 0;
+          return sum + amt;
+        }, 0);
+      }
     }

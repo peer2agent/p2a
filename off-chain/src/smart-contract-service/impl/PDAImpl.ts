@@ -3,6 +3,7 @@ import { P2a } from "../../../../target/types/p2a";
 import { RewardTraderClient } from "../client/RewardTraderClient";
 import * as anchor from "@coral-xyz/anchor";
 import * as fs from "fs";
+import { error } from "console";
 
 export class PDAImpl {
     private program: anchor.Program<P2a>
@@ -187,5 +188,25 @@ export class PDAImpl {
             console.error("Error fetching followers:", error);
             throw error;
         }
+  }
+
+  async getPoteBalance(publicKey:PublicKey): Promise<number> {
+    try {
+      const [potePda] = this.getPDA("pote", publicKey);
+  
+      const poteAccount = await this.program.account.apport.fetch(potePda);
+  
+      const balance = poteAccount.amount
+  
+      console.log(`Pote PDA: ${potePda.toBase58()}`);
+      console.log(`Saldo do pote: ${balance}`);
+  
+      return balance;
+
+    }catch (error) {
+      console.error("error ->",error)
+      throw error
     }
+    
+  }
 }
