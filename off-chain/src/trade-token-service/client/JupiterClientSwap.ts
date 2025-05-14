@@ -7,11 +7,9 @@ import { randomUUID } from 'crypto';
 export class JupiterClientSwap {
     private connection: Connection
     private isSimulationTransaction: boolean;
-
-    constructor(connection: Connection, isSimulation:boolean) {
-        this.connection = connection;
+    constructor(isSimulation:boolean) {
+        this.connection = new Connection("http://127.0.0.1:8899", "confirmed");
         this.isSimulationTransaction = isSimulation;
-        
     }
 
 

@@ -13,8 +13,8 @@ export class JupiterImpl {
 
     constructor(inputSwap:InputSwapDTO) {
         
-        const { outputMintTokenAddress, inputMintTokenAddress, connection, ownerUserKey, isSimulation } = inputSwap;
-        this.jupyterClient = new JupiterClientSwap(connection,isSimulation)
+        const { outputMintTokenAddress, inputMintTokenAddress, ownerUserKey, isSimulation } = inputSwap;
+        this.jupyterClient = new JupiterClientSwap(isSimulation)
         this.inputMintTokenAddress = inputMintTokenAddress
         this.outputMintTokenAddress = outputMintTokenAddress
         this.swapUserKeypair = ownerUserKey
@@ -35,25 +35,5 @@ export class JupiterImpl {
         }
     }
 
-    public selectMode(wallet:WalletDTO, tokenPercentage:number): number {
-        var balance = wallet.usdBalance
 
-        switch (true) {
-            case balance >= 50_000:
-                console.log("balance >= 50_000")
-                return 0.1
-            case balance < 50_000 && balance >=10_000:
-                console.log("balance >= 10_000")
-                return 0.05
-            default:
-                console.log("balance menor")
-                return tokenPercentage
-        }
-    }
-
-    public async getBalance(publicKey:PublicKey): Promise<number> {
-        var balance= await this.jupyterClient.getBalance(publicKey)
-        console.log("my balance ->", balance)
-        return balance
-    }
 }

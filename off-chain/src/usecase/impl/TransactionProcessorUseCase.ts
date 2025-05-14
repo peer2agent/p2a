@@ -3,6 +3,11 @@ import { SwapTransactionDTO, TransferTransactionDTO } from "../../transaction-pr
 import { TransactionProcessorImpl } from "../../transaction-processor-service/impl/TransactionProcessorImpl";
 import { PublicKey } from "@solana/web3.js";
 import { RealiseSwapByPDAUseCase } from "./RealiseSwapByPDAUseCase";
+import { JupiterImpl } from "../../trade-token-service/impl/JupiterSwapImpl";
+import { WalletTrackerImpl } from "../../wallet-tracker-service/impl/WalletTrackerImpl";
+import { WalletDTO } from "../../wallet-tracker-service/dto/WalletDTO";
+import { junit } from "node:test/reporters";
+import { JupiterClientSwap } from "../../trade-token-service/client/JupiterClientSwap";
 
 export class TransactionProcessorUseCase {
     private processor: TransactionProcessorImpl;
@@ -45,18 +50,31 @@ export class TransactionProcessorUseCase {
             
 
             const realiseSwapByPDAUseCase = new RealiseSwapByPDAUseCase()
-
-            const outputMintTokenAddress = new PublicKey(swap.outputToken.mint)
             
-            const inputMintTokenAddress= new PublicKey(swap.inputToken.mint)
-
-            //TODO NOYMA VAI APLICAR A LOGICA PARA EXTRAIR O VALOR PARA O TRADE
+            const solToken = "So11111111111111111111111111111111111111112";
             
-            var amount =  500
+            // Verify input and output tokens
+            const jupiter = new JupiterClientSwap(false);
+            
+            // Check if we need to route through SOL token
+            let inputTokenToUse = swap.inputToken.mint;
+            let outputTokenToUse = swap.outputToken.mint;
+            
+            // If neither token is SOL, we need to:
+            // 1. First swap SOL -> input token
+            // 2. Then swap input token -> output token
+            if (swap.inputToken.mint !== solToken && swap.outputToken.mint !== solToken) {
+                console.log("Neither token is SOL, routing through SOL first");
+                inputTokenToUse = solToken;
+            }
+            
 
-            await realiseSwapByPDAUseCase.execute(new PublicKey(swap.trackedWallet),amount,inputMintTokenAddress,outputMintTokenAddress)
+            const outputMintTokenAddress = new PublicKey(inputTokenToUse)
         
-        
+            const inputMintTokenAddress= new PublicKey(outputTokenToUse)
+
+            await realiseSwapByPDAUseCase.execute(new PublicKey(swap.trackedWallet),swap.inputToken.amount,inputMintTokenAddress,outputMintTokenAddress)
+
             console.log("Copy trade realized successfully")
         } catch (error) {
             console.log("Error processing swap", error)
@@ -71,5 +89,6 @@ export class TransactionProcessorUseCase {
         console.log(`To: ${transfer.toAddress}`);
         console.log(`Amount: ${transfer.token.amount} ${transfer.token.mint}`);
     }
+
 
 }
