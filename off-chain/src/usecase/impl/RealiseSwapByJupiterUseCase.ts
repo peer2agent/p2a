@@ -14,7 +14,7 @@ export class RealiseSwapByJupiterUseCase {
         
         const keypairBytes = bs58.decode(keypairBase58);
         
-        const keypair = Keypair.fromSecretKey(keypairBytes); //TODO
+        const keypair = Keypair.fromSecretKey(keypairBytes);
 
         const wallets = trackingInfoInputDTO.trackedWallet.map(wallets => wallets.wallet)
         

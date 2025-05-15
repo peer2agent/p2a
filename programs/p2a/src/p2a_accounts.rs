@@ -51,15 +51,21 @@ pub struct TraderAccount<'info> {
 
 #[derive(Accounts)]
 pub struct AddFollower<'info> {
-    /// Mesma PDA de follow_list usada em TraderAccount
+    /// Lista de seguidores do trader
     #[account(
         mut,
-        seeds = [FOLLOW_LIST_SEED, signer.key().as_ref()],
+        seeds = [FOLLOW_LIST_SEED, trader.key().as_ref()],
         bump
     )]
     pub follow_list: Account<'info, ListOfFollow>,
 
-    pub signer: Signer<'info>,
+    /// CHECK: This is the trader's account that owns the follow list. We only use it as a seed for the PDA.
+    pub trader: AccountInfo<'info>,
+
+    /// The user who wants to follow the trader
+    pub follower: Signer<'info>,
+
+    pub system_program: Program<'info, System>,
 }
 
 #[derive(Accounts)]
@@ -109,7 +115,6 @@ pub struct ExecuteSwap<'info> {
     
     /// CHECK: Jupiter program
     pub jupiter_program: AccountInfo<'info>,
-
 }
 
 #[derive(Accounts)]

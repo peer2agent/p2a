@@ -180,15 +180,32 @@ export class PDAImpl {
     }
 
     async getFollowersByTrader(traderPublicKey: PublicKey): Promise<string[]> {
-        try {
-            const [followListPda] = this.getPDA("follow_list", traderPublicKey);
-            const followList = await this.program.account.listOfFollow.fetch(followListPda);
-            return followList.follows.map((pk: any) => pk);
-        } catch (error) {
-            console.error("Error fetching followers:", error);
-            throw error;
-        }
-  }
+      try {
+        console.log("📋 Fetching trader's follower list...")
+        console.log("   Trader:", traderPublicKey.toString())
+
+        const [followListPda] = PublicKey.findProgramAddressSync(
+          [Buffer.from("follow_list"), traderPublicKey.toBuffer()],
+          this.program.programId
+        );
+        
+        console.log("   Follow List PDA:", followListPda.toString())
+        
+        const followList = await this.program.account.listOfFollow.fetch(followListPda);
+        const followers = followList.follows.map(pk => pk.toBase58());
+        
+        console.log("✅ Follower list retrieved successfully")
+        console.log("   Total followers:", followers.length)
+        console.log("   Followers:", followers)
+        
+        return followers
+      } catch (error) {
+          console.error("❌ Error fetching follower list:")
+          console.error("   Trader:", traderPublicKey.toString())
+          console.error("   Error details:", error instanceof Error ? error.message : String(error))
+          throw error;
+      }
+    }
 
   async getPoteBalance(publicKey:PublicKey): Promise<number> {
     try {

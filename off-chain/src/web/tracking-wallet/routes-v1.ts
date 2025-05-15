@@ -12,6 +12,7 @@ import { Keypair, PublicKey } from "@solana/web3.js";
 import { bs58 } from "@coral-xyz/anchor/dist/cjs/utils/bytes";
 import { InitializeTraderUseCase } from "../../usecase/impl/InitializeTraderUseCase";
 import { UserBalanceUseCase } from "../../usecase/impl/UserBalanceUseCase";
+import { PDAImpl } from "../../smart-contract-service/impl/PDAImpl";
 
 
 dotenv.config();
@@ -87,7 +88,7 @@ app.post("/p2a", (req, res) => {
 
 app.post("/user/apport", async (req:any, res:any) => {
   try {
-    const { secretKey } = req.body;
+    const { secretKey, amount } = req.body;
     if (!secretKey) {
       return res.status(400).json({
         status: "error",
@@ -99,7 +100,7 @@ app.post("/user/apport", async (req:any, res:any) => {
     const keypair = Keypair.fromSecretKey(keypairBytes);
     
     const sendReconpenseToTrader = new UserBalanceUseCase(keypair);
-    await sendReconpenseToTrader.execute(0.5);
+    await sendReconpenseToTrader.execute(amount);
 
     res.send({ 
       message: "User initialized successfully",
@@ -143,16 +144,23 @@ app.post("/user/add-balance", async (req:any, res:any) => {
 
 app.post("/trader/init-trader", async (req, res) => {
   try {
-    const keypair = anchor.web3.Keypair.fromSecretKey(
-      new Uint8Array(JSON.parse(fs.readFileSync(
-        '/home/inteli/Desktop/wallet-tracker-sol/trader.json', 'utf8'
-      )))
-  );    
+    const { secretKey } = req.body;
+
+    const keypairBytes = bs58.decode(secretKey);
+    
+    const keypair = Keypair.fromSecretKey(keypairBytes);
+    
     const initializeTraderUseCase = new InitializeTraderUseCase();
-    console.log("trader ->",keypair.publicKey.toString())
+    
+    console.log("🚀 Starting trader initialization process...")
+    
+    const phantomImportString = bs58.encode(keypair.secretKey);
+    
+    console.log("✅ Phantom import format:", phantomImportString);
+    
     await initializeTraderUseCase.execute(keypair);
 
-    res.send({ message: "PDA on for" });
+    res.send({ message: "✅ Trader initialized successfully\n   Ready to accept followers and execute trades" });
   } catch (error) {
     res.status(400).json({
       status: "error",
@@ -186,12 +194,12 @@ app.post("/user/follow-trader", async (req:any, res:any) => {
         message: "Secret key and trader public key are required"
       });
     }
-
     const keypairBytes = bs58.decode(secretKey);
     const keypair = Keypair.fromSecretKey(keypairBytes);
     const publicKey = new PublicKey(traderPublicKey);
-
-    const initializeTraderUseCase = new InitializeTraderUseCase();
+    
+    const initializeTraderUseCase = await new InitializeTraderUseCase();
+    
     await initializeTraderUseCase.addFollow(keypair, publicKey);
 
     res.send({ 
@@ -229,6 +237,30 @@ app.post("/executeSwap", async (req:any, res:any) => {
       message: "Swap executed successfully",
       result: value,
       publicKey: keypair.publicKey.toString()
+    });
+  } catch (error) {
+    res.status(400).json({
+      status: "error",
+      message: error instanceof Error ? error.message : "Unknown error occurred"
+    });
+  }
+});
+
+app.get("/user/apport", async (req:any, res:any) => {
+  try {
+    const { publicKey } = req.body;
+    if (!publicKey) {
+      return res.status(400).json({
+        status: "error",
+        message: "Public key is required"
+      });
+    }
+
+    const pote = await new PDAImpl().getPoteBalance(publicKey);
+
+    res.send({
+      message: "Apport amount retrieved successfully",
+      amount: pote
     });
   } catch (error) {
     res.status(400).json({

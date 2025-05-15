@@ -42,9 +42,8 @@ pub mod p2a {
 
     pub fn add_follower(
         ctx: Context<AddFollower>,
-        new_follower: Pubkey
     ) -> Result<()> {
-        instructions::add_follower::handler(ctx, new_follower)
+        instructions::add_follower::handler(ctx)
     }
 
     pub fn update_apport(
