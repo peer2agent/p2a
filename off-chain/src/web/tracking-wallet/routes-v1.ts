@@ -29,13 +29,13 @@ app.use(
   })
 );
 
-app.post("/tracking", async (req, res) => {
+app.get("/tracking", async (req, res) => {
 
-  var message = req.body
+  var {walletsToTraker} = req.body
 
   var tracker = new TrackingWalletUseCase();
 
-  var distribution = await tracker.usecase(message);
+  var distribution = await tracker.usecase(walletsToTraker);
 
   res.send(distribution);
 

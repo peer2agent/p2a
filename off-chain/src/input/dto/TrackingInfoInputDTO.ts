@@ -5,7 +5,6 @@ export interface TrackingInfoInputDTO {
     walletOwner: PublicKey
     trackedWallet: ListTrackerDTO[];
     webhookURL: string;
-    configTrade?: string;
     isSimulation: boolean;
 }
 

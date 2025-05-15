@@ -5,19 +5,23 @@ import { WalletDTO } from "../../wallet-tracker-service/dto/WalletDTO";
 
 export class TrackingWalletUseCase implements TrackingService {
     
-    async usecase(trackingInfoInputDTO:TrackingInfoInputDTO): Promise<any[]> {
+    async usecase(walletsToTraker:string[]): Promise<any[]> {
         
         var trackingTokens:WalletDTO[] = []
         
-        var wallets = trackingInfoInputDTO.trackedWallet.map(wallets => wallets.wallet)
+        var wallets = walletsToTraker
         
         const trackingInfo = new WalletTrackerImpl();
 
         await trackingInfo.createWebhook(wallets);
+
+        console.log(`\n[${new Date().toISOString()}] Wallets to track: ${wallets}`);
         
-        await Promise.all(trackingInfoInputDTO.trackedWallet.map(async (wallet) => {
+        await Promise.all(wallets.map(async (wallet) => {
+            console.log(`\nStarting fetch for wallet: ${wallet}`);
             
-            trackingTokens.push(await trackingInfo.getDistribution(wallet.wallet))
+            trackingTokens.push(await trackingInfo.getDistribution(wallet))
+        
         }))
         
         return trackingTokens
