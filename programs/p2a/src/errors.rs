@@ -6,4 +6,8 @@ pub enum ErrorCode {
     NotAllowed,
     #[msg("Overflow detected during apport update")]
     Overflow,
+    #[msg("User is already following this trader")]
+    AlreadyFollowing,
+    #[msg("Follow list is at maximum capacity")]
+    FollowListFull,
 }

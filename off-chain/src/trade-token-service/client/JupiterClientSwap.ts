@@ -8,7 +8,7 @@ export class JupiterClientSwap {
     private connection: Connection
     private isSimulationTransaction: boolean;
     constructor(isSimulation:boolean) {
-        this.connection = new Connection("http://127.0.0.1:8899", "confirmed");
+        this.connection = new Connection("https://api.devnet.solana.com", "confirmed");
         this.isSimulationTransaction = isSimulation;
     }
 

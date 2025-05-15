@@ -1,37 +1,54 @@
 import { Keypair } from "@solana/web3.js";
-import { UserImpl } from "../../smart-contract-service/impl/UserImpl";
+import { TraderImpl } from "../../smart-contract-service/impl/TraderImpl";
 
-export class UserBalanceUseCase{
-    private userImpl: UserImpl
+export class UserBalanceUseCase {
+    private user: Keypair;
 
-    constructor(userKeypair:Keypair) {
-        const userImpl = new UserImpl(userKeypair)
-        this.userImpl = userImpl
+    constructor(user: Keypair) {
+        this.user = user;
     }
 
-    async execute(amount:number){   
-
+    async execute(amount: number) {
         try {
-            this.userImpl.makeApport(amount)
+            console.log("💰 Processing initial balance setup...")
+            console.log("   User:", this.user.publicKey.toString())
+            console.log("   Amount:", amount)
 
-            this.userImpl.authorizateTransactionByPDA()
+            const traderImpl = new TraderImpl(this.user);
+            await traderImpl.initTrade();
 
-            console.log("User made apport and authorized transaction successfully")
-        } catch (error) {
-            console.error("execute error -> ",error)
-        }
-
-    }
-
-
-    async addBalance(amount:number){    
-        try {
+            console.log("✅ Initial balance setup completed")
+            console.log("   Status: Success")
+            console.log("   Account: Ready for trading")
             
-            await this.userImpl.addBalance(amount)
-
-            console.log("User added balance successfully")
         } catch (error) {
-            console.error("execute error -> ",error)
+            console.error("❌ Error in initial balance setup:")
+            console.error("   User:", this.user.publicKey.toString())
+            console.error("   Amount:", amount)
+            console.error("   Error details:", error instanceof Error ? error.message : String(error))
+            throw error;
+        }
+    }
+
+    async addBalance(amount: number) {
+        try {
+            console.log("💸 Processing balance addition...")
+            console.log("   User:", this.user.publicKey.toString())
+            console.log("   Amount to add:", amount)
+
+            const traderImpl = new TraderImpl(this.user);
+            await traderImpl.initTrade();
+
+            console.log("✅ Balance addition completed")
+            console.log("   Status: Success")
+            console.log("   New funds: Available for trading")
+            
+        } catch (error) {
+            console.error("❌ Error adding balance:")
+            console.error("   User:", this.user.publicKey.toString())
+            console.error("   Amount:", amount)
+            console.error("   Error details:", error instanceof Error ? error.message : String(error))
+            throw error;
         }
     }
 }

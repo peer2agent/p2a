@@ -24,14 +24,3 @@ pub struct PermissionToTrade {
 pub struct ListOfFollow {
     pub follows: Vec<Pubkey>,
 }
-
-/// Exemplo de estrutura para autorizar swap (não usada diretamente acima)
-#[account]
-pub struct SwapAuthorization {
-    pub owner: Pubkey,
-    pub executor: Pubkey,
-    pub token_in: Pubkey,
-    pub token_out: Pubkey,
-    pub amount: u64,
-    pub is_active: bool,
-}

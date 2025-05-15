@@ -23,7 +23,6 @@ export class UserImpl {
             const payer = this.payer
             const payerPublicKey = this.payer.publicKey
             const [potePda] = this.getPDA("pote", payerPublicKey);
-            console.log("kiska")
             
             await this.program.methods
             .makeApport(value)
@@ -75,7 +74,6 @@ export class UserImpl {
             .rpc();
 
             const acc = await this.program.account.swapDelegate.fetch(swapPda)
-            console.log("swapPda -> ", swapPda.toBase58())  
             return acc
         } catch (error){
             console.error(error)

@@ -21,8 +21,7 @@ export class RewardTraderClient {
       
       const dummy = keypair;
       
-      this.connection = new anchor.web3.Connection("http://127.0.0.1:8899", "confirmed")
-      
+      this.connection = new anchor.web3.Connection("https://api.devnet.solana.com", "confirmed")
       
       const provider = new anchor.AnchorProvider(
         this.connection,
@@ -36,8 +35,6 @@ export class RewardTraderClient {
       
       
       const program = anchor.workspace.P2a as anchor.Program<P2a>;
-
-      console.log("keypair", keypair) 
       
       this.program =program 
     }
