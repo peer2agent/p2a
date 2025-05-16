@@ -1,10 +1,13 @@
 import { Keypair } from "@solana/web3.js";
-import { TraderImpl } from "../../smart-contract-service/impl/TraderImpl";
+import { UserImpl } from "../../smart-contract-service/impl/UserImpl";
 
 export class UserBalanceUseCase {
+    private userImpl: UserImpl;
     private user: Keypair;
 
     constructor(user: Keypair) {
+        const userImpl = new UserImpl(user)
+        this.userImpl = userImpl
         this.user = user;
     }
 
@@ -14,12 +17,11 @@ export class UserBalanceUseCase {
             console.log("   User:", this.user.publicKey.toString())
             console.log("   Amount:", amount)
 
-            const traderImpl = new TraderImpl(this.user);
-            await traderImpl.initTrade();
+            this.userImpl.makeApport(amount)
+            this.userImpl.authorizateTransactionByPDA()
 
             console.log("✅ Initial balance setup completed")
             console.log("   Status: Success")
-            console.log("   Account: Ready for trading")
             
         } catch (error) {
             console.error("❌ Error in initial balance setup:")
@@ -36,8 +38,7 @@ export class UserBalanceUseCase {
             console.log("   User:", this.user.publicKey.toString())
             console.log("   Amount to add:", amount)
 
-            const traderImpl = new TraderImpl(this.user);
-            await traderImpl.initTrade();
+            await this.userImpl.addBalance(amount)
 
             console.log("✅ Balance addition completed")
             console.log("   Status: Success")

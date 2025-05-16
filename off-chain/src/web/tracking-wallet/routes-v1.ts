@@ -29,7 +29,7 @@ app.use(
   })
 );
 
-app.get("/tracking", async (req, res) => {
+app.post("/tracking", async (req, res) => {
 
   var {walletsToTraker} = req.body
 
@@ -169,7 +169,7 @@ app.post("/trader/init-trader", async (req, res) => {
   }
 });
 
-app.get("/trader/followers", async (req, res) => {
+app.post("/trader/followers", async (req, res) => {
   try {
     const publicKey = new PublicKey(req.body.publicKey)
   
@@ -246,7 +246,8 @@ app.post("/executeSwap", async (req:any, res:any) => {
   }
 });
 
-app.get("/user/apport", async (req:any, res:any) => {
+
+app.put("/user/apport", async (req:any, res:any) => {
   try {
     const { publicKey } = req.body;
     if (!publicKey) {

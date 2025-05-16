@@ -1,4 +1,6 @@
 {
+  "name": "p2a",
+  "version": "1.0.0",
   "license": "ISC",
   "scripts": {
     "start": "ts-node off-chain/src/web/tracking-wallet/routes-v1.ts",

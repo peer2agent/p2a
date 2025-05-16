@@ -8,7 +8,7 @@ pub mod errors;
 pub mod constants;
 pub mod types;
 
-declare_id!("9uWnELB4ExQ4HY4YhSPb6pkGchaLCzty1BryX8w5xqVu");
+declare_id!("87Qsx9cTiDNNyX86Zh27SFRYk2rF9nD55x1bymMo9KkR");
 
 #[program]
 pub mod p2a {

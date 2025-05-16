@@ -3,6 +3,8 @@ import * as fs from "fs";
 import * as anchor from "@coral-xyz/anchor";
 import {  Connection, PublicKey,} from "@solana/web3.js";
 import { P2a } from "../../../../target/types/p2a";
+import path from "path";
+import os from "os";
 
 
 export class RewardTraderClient {
@@ -13,11 +15,11 @@ export class RewardTraderClient {
 
     constructor() {
               
+      const keypairPath = path.join(os.homedir(), ".config", "solana", "id.json");
+
       const keypair = anchor.web3.Keypair.fromSecretKey(
-        new Uint8Array(JSON.parse(fs.readFileSync(
-          '/home/inteli/.config/solana/id.json', 'utf8'
-        )))
-      );
+      
+      new Uint8Array(JSON.parse(fs.readFileSync(keypairPath, "utf8"))))
       
       const dummy = keypair;
       
