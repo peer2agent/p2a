@@ -3,12 +3,8 @@ import { SwapTransactionDTO, TransferTransactionDTO } from "../../transaction-pr
 import { TransactionProcessorImpl } from "../../transaction-processor-service/impl/TransactionProcessorImpl";
 import { PublicKey } from "@solana/web3.js";
 import { RealiseSwapByPDAUseCase } from "./RealiseSwapByPDAUseCase";
-import { JupiterImpl } from "../../trade-token-service/impl/JupiterSwapImpl";
-import { WalletTrackerImpl } from "../../wallet-tracker-service/impl/WalletTrackerImpl";
-import { WalletDTO } from "../../wallet-tracker-service/dto/WalletDTO";
-import { junit } from "node:test/reporters";
 import { JupiterClientSwap } from "../../trade-token-service/client/JupiterClientSwap";
-
+import { SnsImpl } from "../../event-producer/sns/impl/SnsImpl";
 export class TransactionProcessorUseCase {
     private processor: TransactionProcessorImpl;
 
@@ -40,8 +36,8 @@ export class TransactionProcessorUseCase {
         }}
 
         private async handleSwap(swap: SwapTransactionDTO): Promise<void> {
-            try {
-              const jupiter = new JupiterClientSwap(false);
+          try {
+            const jupiter = new JupiterClientSwap(false);
               const swapper = new RealiseSwapByPDAUseCase();
               const wallet  = new PublicKey(swap.trackedWallet);
               const solMint = new PublicKey("So11111111111111111111111111111111111111112");
@@ -49,14 +45,15 @@ export class TransactionProcessorUseCase {
               const outMint = new PublicKey(swap.outputToken.mint);
               const sellAmt = swap.inputToken.amount;
               const buyAmt  = swap.outputToken.amount;
-          
+              
               // fetch balances
               const inBal  = await jupiter.getSPLTokenBalance(wallet, inMint);
               const outBal = await jupiter.getSPLTokenBalance(wallet, outMint);
+              console.log(`Processing swap by ${wallet.toString}: `);
           
               let routeFrom: PublicKey;
               let routeTo:   PublicKey;
-          
+              
               if (inBal >= sellAmt && outBal >= buyAmt) {
                 // both tokens present → exact swap
                 routeFrom = inMint;
@@ -84,12 +81,36 @@ export class TransactionProcessorUseCase {
                   routeTo   = inMint;
                 }
               }
-          
+
+              
               console.log(`Routing trade ${routeFrom.toBase58()} → ${routeTo.toBase58()} for ${sellAmt}`);
-              await swapper.execute(wallet, sellAmt, routeFrom, routeTo);
+              const tradeResults = await swapper.execute(wallet, sellAmt, routeFrom, routeTo);
+
               console.log("Copy trade realized successfully");
+
+              console.log(tradeResults);  
+
+              const eventProducer = new SnsImpl(`${wallet.toBase58()}-${RandomUUID()}`);
+
+              const msg = JSON.stringify({
+                traderWallet: wallet.toBase58(),
+                fromToken: routeFrom.toBase58(),
+                toToken: routeTo.toBase58(),
+                amount: sellAmt,
+                status: 'success'
+              });
+              
+              const response = await eventProducer.sendMessage({
+                message: msg,
+                id: `${wallet.toBase58()}-${RandomUUID()}`
+              });
+
+              console.log("Trade confirmation sent to SNS");
+
+              console.log(response);
           
             } catch (err) {
+              console.log("dosakdoskadoksaodkosakdsakdosakdoas")
               console.error("Error processing swap", err);
             }
           }
@@ -105,4 +126,8 @@ export class TransactionProcessorUseCase {
     }
 
 
+}
+
+function RandomUUID(): string {
+  throw new Error("Function not implemented.");
 }

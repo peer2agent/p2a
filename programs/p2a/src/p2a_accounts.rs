@@ -119,13 +119,36 @@ pub struct ExecuteSwap<'info> {
 
 #[derive(Accounts)]
 pub struct TransferSol<'info> {
+  /// CHECK: this is our escrow PDA, seeded by the user’s pubkey
+  #[account(mut,
+            seeds = [b"swap_authority", authority.key().as_ref()],
+            bump)]
+  pub swap_authority: UncheckedAccount<'info>,
+
+  /// This is the recipient
+  #[account(mut)]
+  pub to: SystemAccount<'info>,
+
+  /// The user who authorized creating the PDA in an earlier step
+  pub authority: Signer<'info>,
+
+  pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct DepositToPda<'info> {
     #[account(mut)]
-    pub from: Signer<'info>,
-    
-    /// CHECK: This is safe because we only transfer SOL to this account
-    #[account(mut)]
-    pub to: AccountInfo<'info>,
-    
+    pub authority: Signer<'info>,
+
+    /// CHECK: this PDA is derived via `seeds=[b"swap_authority", authority.key().as_ref()]`
+    /// and only the program can sign for it via those seeds—no further on-chain checks needed.
+    #[account(
+      mut,
+      seeds = [b"swap_authority", authority.key().as_ref()],
+      bump
+    )]
+    pub swap_authority: UncheckedAccount<'info>,
+
     pub system_program: Program<'info, System>,
 }
 

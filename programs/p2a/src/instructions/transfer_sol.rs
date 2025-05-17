@@ -1,22 +1,29 @@
 use anchor_lang::prelude::*;
 use anchor_lang::system_program;
+use crate::p2a_accounts::TransferSol;
 
-pub fn handler(ctx: Context<crate::p2a_accounts::TransferSol>, amount: u64) -> Result<()> {
-    // Create the transfer instruction
-    let transfer_instruction = system_program::Transfer {
-        from: ctx.accounts.from.to_account_info(),
-        to: ctx.accounts.to.to_account_info(),
-    };
+pub fn handler(ctx: Context<TransferSol>, amount: u64) -> Result<()> {
+  let authority_key = ctx.accounts.authority.key();
+  let bump = ctx.bumps.swap_authority;
+  
+  let seeds = &[
+    b"swap_authority" as &[u8],
+    authority_key.as_ref(),
+    &[bump],
+  ];
+  let signer_seeds = &[&seeds[..]];
 
-    // Execute the transfer with the specified amount
-    system_program::transfer(
-        CpiContext::new(
-            ctx.accounts.system_program.to_account_info(),
-            transfer_instruction,
-        ),
-        amount,
-    )?;
-
-    msg!("Transferred {} lamports to {}", amount, ctx.accounts.to.key());
-    Ok(())
-} 
+  let cpi_accounts = system_program::Transfer {
+    from: ctx.accounts.swap_authority.to_account_info(),
+    to:   ctx.accounts.to.to_account_info(),
+  };
+  
+  let cpi_ctx = CpiContext::new_with_signer(
+    ctx.accounts.system_program.to_account_info(),
+    cpi_accounts,
+    signer_seeds,
+  );
+  
+  system_program::transfer(cpi_ctx, amount)?;
+  Ok(())
+}

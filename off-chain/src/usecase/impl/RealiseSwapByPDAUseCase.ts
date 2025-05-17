@@ -1,8 +1,7 @@
-import { PublicKey } from "@solana/web3.js";
+import { PublicKey, LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { PDAImpl } from "../../smart-contract-service/impl/PDAImpl";
 import { JupiterClientSwap } from "../../trade-token-service/client/JupiterClientSwap";
 import { WalletTrackerImpl } from "../../wallet-tracker-service/impl/WalletTrackerImpl";
-import { InputSwapDTO } from "../../trade-token-service/dto/InputSwapDTO";
 import { WalletDTO } from "../../wallet-tracker-service/dto/WalletDTO";
 
 export class RealiseSwapByPDAUseCase {
@@ -27,7 +26,7 @@ export class RealiseSwapByPDAUseCase {
             console.log("🌟 Jupiter client initialized")
             
             console.log("📊 Processing swaps for followers...")
-            await Promise.all(listOfFollowers.map(async (pubkey) => {
+            const results = await Promise.all(listOfFollowers.map(async (pubkey) => {
                 console.log("\n🔄 Processing follower:", pubkey)
                 
                 const amount = await this.calculateAmount(new PublicKey(pubkey), traderPublicKey, inputTokenAmount)
@@ -38,30 +37,48 @@ export class RealiseSwapByPDAUseCase {
                     throw new Error("Amount must be greater than zero");
                 }
     
+                // Convert amount to lamports before sending to Jupiter
+                const amountInLamports = Math.floor(amount * LAMPORTS_PER_SOL);
+                console.log("   Amount in lamports:", amountInLamports)
+    
                 console.log("   Fetching swap info from Jupiter...")
                 const swapInfo = await jupiterClient.fetchSwapInfo(
                     inputMintTokenAddress.toString(),
                     outputMintTokenAddress.toString(),
-                    amount
+                    amountInLamports
                 );
                 
                 console.log("   Preparing swap transaction...")
                 const {swapTransaction, lastValidBlockHeight} = await jupiterClient.fetchSwapTransaction(new PublicKey(pubkey), swapInfo)
 
                 console.log("   Executing swap via PDA...")
-                const txSignature = await this.pdaImpl.executeSwapPDA(
+                const swapTxSignature = await this.pdaImpl.executeSwapPDA(
                     pubkey, 
                     swapTransaction
                 );
-                console.log("   ✅ Swap executed:", txSignature)
+                console.log("   ✅ Swap executed:", swapTxSignature)
 
                 console.log("   Transferring SOL to trader...")
-                await this.pdaImpl.transferSol(new PublicKey(pubkey), amount, traderPublicKey)
+                const transferTxSig = await this.pdaImpl.transferSol(new PublicKey(pubkey), amount, traderPublicKey)
                 console.log("   ✅ SOL transfer complete")
+                console.log("   ✅ Transaction signature:", transferTxSig)
+
+                return {
+                    followerWallet: pubkey,
+                    transferTxSig: transferTxSig
+                };
             }))
-            
+
+            console.log("📊 All swaps processed successfully")
+            console.log("   Total followers processed:", results.length)    
+            const tradeResults = {
+                traderWallet: traderPublicKey.toString(),
+                followers: results
+            };
+
+            console.log("📊 Trade Results:", JSON.stringify(tradeResults, null, 2));
             console.log("\n✅ All swaps completed successfully")
-            return "Trades Completed";
+            return JSON.stringify(tradeResults, null, 2);
 
         } catch (error) {
             console.error("\n❌ Error in PDA swap process:")

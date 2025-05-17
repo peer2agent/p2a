@@ -35,10 +35,9 @@ export class RewardTraderClient {
 
       anchor.setProvider(provider);
       
-      
       const program = anchor.workspace.P2a as anchor.Program<P2a>;
       
-      this.program =program 
+      this.program = program 
     }
 
     public getPDA(seed: string, pubkey: anchor.web3.PublicKey) {

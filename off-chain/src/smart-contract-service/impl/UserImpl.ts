@@ -7,6 +7,7 @@ import { P2a } from "../../../../target/types/p2a";
 export class UserImpl {
     private payer: Keypair
     private program: anchor.Program<P2a>
+    private provider: anchor.AnchorProvider
 
 
     private rewardTraderClient: RewardTraderClient
@@ -15,6 +16,7 @@ export class UserImpl {
         this.payer = payer
         this.rewardTraderClient = new RewardTraderClient()
         this.program= this.rewardTraderClient.program
+        this.provider = this.rewardTraderClient.provider
         
     }
 
@@ -22,7 +24,11 @@ export class UserImpl {
         try{
             const payer = this.payer
             const payerPublicKey = this.payer.publicKey
+
             const [potePda] = this.getPDA("pote", payerPublicKey);
+            
+
+
             
             await this.program.methods
             .makeApport(value)
@@ -31,6 +37,8 @@ export class UserImpl {
             })
             .signers([payer])
             .rpc()
+
+
             return potePda.toBase58()
 
         }catch (e) {
@@ -39,6 +47,7 @@ export class UserImpl {
         }
           
     }
+
 
     async addBalance(value:number){
         try {
@@ -103,12 +112,10 @@ export class UserImpl {
             console.error(error)
             throw error
         }
-            
     }
 
     private getPDA(seed: string, pubkey: anchor.web3.PublicKey){
         return this.rewardTraderClient.getPDA(seed, pubkey)
     }
-
 
 }
