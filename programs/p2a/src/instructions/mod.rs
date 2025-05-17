@@ -6,3 +6,4 @@ pub mod update_apport;
 pub mod delegate_swap_authority;
 pub mod execute_swap;
 pub mod transfer_sol;
+pub mod make_deposit;

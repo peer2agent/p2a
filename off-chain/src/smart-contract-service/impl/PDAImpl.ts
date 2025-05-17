@@ -2,8 +2,6 @@ import { ComputeBudgetProgram, Connection, Keypair, PublicKey, sendAndConfirmTra
 import { P2a } from "../../../../target/types/p2a"; 
 import { RewardTraderClient } from "../client/RewardTraderClient";
 import * as anchor from "@coral-xyz/anchor";
-import * as fs from "fs";
-import { error } from "console";
 
 export class PDAImpl {
     private program: anchor.Program<P2a>
@@ -145,33 +143,47 @@ export class PDAImpl {
       
     async transferSol(userPubkey: PublicKey, amount: number, traderPubkey: PublicKey): Promise<string> {
         try {
-            const [swapDelegate] = this.getPDA("swap_authority", userPubkey);
-
-            const tx = await this.program.methods
-                .transferSol(new anchor.BN(amount))
-                .accounts({
-                    from: userPubkey,
-                    to: traderPubkey,
-                })
-                .transaction();
-
-            const { blockhash } = await this.connection.getLatestBlockhash('confirmed');
-            tx.recentBlockhash = blockhash;
-            tx.feePayer = this.provider.wallet.publicKey;
-
-            const txSig = await sendAndConfirmTransaction(
-                this.connection,
-                tx,
-                [this.provider.wallet.payer!],
-                { skipPreflight: true }
+            const amountLamports = new anchor.BN(Math.floor(amount * anchor.web3.LAMPORTS_PER_SOL));
+            
+            const [swapAuthority, bump] = PublicKey.findProgramAddressSync(
+              [Buffer.from("swap_authority"), userPubkey.toBuffer()],
+              this.program.programId
             );
+
+            await this.program.methods
+              .makeDeposit(amountLamports)
+              .accounts({
+                authority: this.provider.wallet.publicKey,
+              })
+              .rpc();
+            
+            console.log("✅ Deposit confirmed");
+
+            console.log("Transfer details:");
+            console.log("   From:", userPubkey.toString());
+            console.log("   To:", traderPubkey.toString());
+            console.log("   Amount (SOL):", amount);
+            console.log("   Amount (lamports):", amountLamports.toString());
+            console.log("   Swap Authority:", swapAuthority.toString());
+
+            const txSig = await this.program.methods
+              .transferSol(amountLamports)
+              .accounts({
+                // must match your Rust #[derive(Accounts)] exactly:
+                // swapAuthority,                      // UncheckedAccount<'info>
+                to: traderPubkey,                   // SystemAccount<'info>
+                authority: this.provider.wallet.publicKey, // Signer<'info'>
+                // systemProgram: SystemProgram.programId,
+              })
+              .rpc();
+
 
             console.log("✅ SOL transfer confirmed:", txSig);
             return txSig;
 
         } catch (error) {
             console.error("❌ Error in transferSol:", error);
-            throw error;
+            return "";
         }
     }
 
@@ -226,4 +238,23 @@ export class PDAImpl {
     }
     
   }
+
+  async makeDeposit(value:anchor.BN){
+    try {
+      console.log("💰 Processing deposit...")
+      console.log("   Amount:", value)
+      console.log("   Authority:", this.provider.wallet.publicKey.toString())
+
+        await this.program.methods
+          .makeDeposit(value)
+          .accounts({
+            authority:  this.provider.wallet.publicKey,
+          })
+          .rpc();
+        console.log("✅ Deposit confirmed");
+
+    } catch (error) {
+        
+    }
+}
 }

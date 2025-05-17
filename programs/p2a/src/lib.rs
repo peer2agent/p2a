@@ -8,7 +8,7 @@ pub mod errors;
 pub mod constants;
 pub mod types;
 
-declare_id!("87Qsx9cTiDNNyX86Zh27SFRYk2rF9nD55x1bymMo9KkR");
+declare_id!("9uWnELB4ExQ4HY4YhSPb6pkGchaLCzty1BryX8w5xqVu");
 
 #[program]
 pub mod p2a {
@@ -19,6 +19,13 @@ pub mod p2a {
         amount: u64
     ) -> Result<()> {
         instructions::transfer_sol::handler(ctx, amount)
+    }
+
+    pub fn make_deposit(
+        ctx: Context<DepositToPda>,
+        amount: u64
+    ) -> Result<()> {
+        instructions::make_deposit::handler(ctx, amount)
     }
 
     pub fn make_apport(

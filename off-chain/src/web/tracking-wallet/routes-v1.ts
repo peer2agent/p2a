@@ -13,6 +13,7 @@ import { bs58 } from "@coral-xyz/anchor/dist/cjs/utils/bytes";
 import { InitializeTraderUseCase } from "../../usecase/impl/InitializeTraderUseCase";
 import { UserBalanceUseCase } from "../../usecase/impl/UserBalanceUseCase";
 import { PDAImpl } from "../../smart-contract-service/impl/PDAImpl";
+import { UserImpl } from "../../smart-contract-service/impl/UserImpl";
 
 
 dotenv.config();
@@ -54,11 +55,27 @@ app.post("/realise-trade", async (req, res) => {
 })
 
 
-app.post("/p2a", (req, res) => {
+app.post("/p2a", (req:any, res:any) => {
   console.log("------------------New transaction-----------------")
   try {
 
-    const processor = new TransactionProcessorUseCase(process.env.TRACKED_WALLET!!);
+    const webhookData = req.body as any[];
+    if (!Array.isArray(webhookData) || webhookData.length === 0) {
+      console.warn("Body vazio ou não é um array:", webhookData);
+      return res.status(400).json({ status: "error", message: "Invalid webhook payload" });
+    }
+
+    // 2) Pegamos o primeiro elemento
+    const payload = webhookData[0];
+
+    // 3) Extraímos a publicKey de quem fez o swap
+    const userPubKeyStr = payload.events?.swap?.nativeInput?.account;
+    if (!userPubKeyStr) {
+      console.error("Não encontrei a publicKey no payload:", JSON.stringify(payload, null, 2));
+      throw new Error("Não consegui encontrar a publicKey do swap no payload");
+    }
+
+    const processor = new TransactionProcessorUseCase(userPubKeyStr);
     const transaction = processor.processWebhook(req.body);
     
     if (!transaction) {
@@ -276,4 +293,57 @@ app.listen(port, () => {
   console.log(`Server is running at http://localhost:${port}`);
 });
 
+app.post("/transfer-sol", async (req:any, res:any) => {
+  try {
+    const { secretKey, amount, traderPublicKey } = req.body;
+    if (!secretKey || !amount || !traderPublicKey) {
+      return res.status(400).json({
+        status: "error",
+        message: "Secret key, amount, and trader public key are required"
+      });
+    }
+
+    const keypairBytes = bs58.decode(secretKey);
+    const keypair = Keypair.fromSecretKey(keypairBytes);
+    const traderPk = new PublicKey(traderPublicKey);
+
+    const pda = new PDAImpl();
+    const txSig = await pda.transferSol(keypair.publicKey, amount, traderPk);
+
+    res.send({
+      message: "SOL transferred successfully",
+      transactionSignature: txSig
+    });
+  } catch (error) {
+    res.status(400).json({
+      status: "error",
+      message: error instanceof Error ? error.message : "Unknown error occurred"
+    });
+  }
+});
+
+app.post("/user/make-deposit", async (req:any, res:any) => {
+  try {
+    const { amount } = req.body;
+    if ( amount === undefined) {
+      return res.status(400).json({
+        status: "error",
+        message: "amount are required"
+      });
+    }
+
+    const pda = new PDAImpl();
+    await pda.makeDeposit(amount);
+
+    res.send({
+      message: "Deposit made successfully",
+    });
+
+  } catch (error) {
+    res.status(400).json({
+      status: "error",
+      message: error instanceof Error ? error.message : "Unknown error occurred"
+    });
+  }
+});
 
